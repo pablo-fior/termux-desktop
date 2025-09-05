@@ -14,25 +14,37 @@
 
 ## Key Features:
 
-- :books: **Easy Setup:** Easy-to-follow installation process.
-- :desktop_computer: **Desktop Styles:** Supports **XFCE**, **LXQt**, and **OPENBOX**... with beautiful themes.
-- :mechanical_arm: **Hardware Acceleration:** It will install all the drivers in order to It will install all the drivers in order to get hardware acceleration working under termux.
-- :paperclips: **GUI Access:** Supports Termux:X11 and VNC (vnc is optional).
-- :package: **Package Management:** Compatible with both APT and [PACMAN](https://youtu.be/ditNvG5Nxj0) (pacman isn't well tested, so there might be some issues).
-- :shopping: **App Store:** A appstore to install apps from termux and suppoted proot-distro.
-- :package: **Container** Normally, you're limited to apps that are supported by Termux, but it have a option for installing apps like LibreOffice via proot-distro / chroot-distro and use them as a native app.
-- And a lot more...
+- :books: **Easy Setup:** Easy-to-follow installation process
+- :desktop_computer: **Desktop Styles:** Supports Xfce, LXQt, and Openbox... others with beautiful themes
+- :mechanical_arm: **Hardware Acceleration:** It will install all the drivers in order to get hardware acceleration working under termux
+- :paperclips: **GUI Access:**
+    - Termux:X11 (Default) 
+    - VNC (vnc is optional and only available via the custom install section)
+- :package: **Package Management:** 
+    - APT (Termux's default and recommended)
+    - [PACMAN](https://youtu.be/ditNvG5Nxj0) (pacman may be buggy, not well tested)
+- :shopping: **App Store:** A appstore to install apps
+- :package: **Container** It lets you use a proot/chroot distro as a container to install more apps than Termux normally supports
+- And a lot more, just chose the custom install option during the setup and see what you can do
+
+---
+
+### Quick Navigation
+<div align="center">
+
+**:package: [Distro Containers](/docs/proot-container.md) • :mechanical_arm: [Hardware Acceleration](/docs/hw-acceleration.md) • :wine_glass:[Wine](/docs/wine.md#wine_glasslearn-about-wine) • :bulb: [Others](/docs/see-more.md)**
+
+</div>
 
 ---
 
 ## Getting Started:
 
 ##### 1. Ensure Requirements Are Met:
+> [!NOTE]
+> This Only Works On Termux From Github Or Fdroid. Avoid using Termux from Google Play that doesn't work due to API limitations.
    - Android 8+ device
    - **[Termux](https://termux.dev/en/)** (download from [GitHub](https://github.com/termux/termux-app/releases) or [F-Droid](https://f-droid.org/en/packages/com.termux/))
-      >NOTE: This Only Works On Termux From Github Or Fdroid
-
-     > Avoid using Termux from Google Play due to API limitations.
    - **[Termux:X11](https://github.com/termux/termux-x11/releases)**
    - **[Termux-API](https://github.com/termux/termux-api/releases)**
    - Minimum 2GB of RAM (3GB recommended)
@@ -41,46 +53,36 @@
    - Root: Optional (only for chroot-distro)
    - VNC Client [RealVNC](https://play.google.com/store/apps/details?id=com.realvnc.viewer.android) or [NetHunter Kex](https://store.nethunter.com/en/packages/com.offsec.nethunter.kex/) _(Optional)_
 
-##### 2. Explore Desktop Styles:
-   - **[XFCE](/readmes/xfce_styles.md)**
-   - **[LXQt](/readmes/lxqt_styles.md)**
-   - **[OPENBOX](/readmes/openbox_styles.md)**
-   - **[MATE](/readmes/mate_styles.md)**
+##### 2. Currently supported Desktop Environments and Window Managers:
 
-##### 3. Currently supported Desktop Environments and Window Managers:
+| Desktop Environments | Window Managers     |
+|----------------------|---------------------|
+| [Xfce](/docs/xfce_styles.md)                 | [Openbox](/docs/openbox_styles.md)             |
+| [LXQt](/docs/lxqt_styles.md)                 | i3                  |
+| [MATE](/docs/mate_styles.md)                 | dwm                 |
+| GNOME                | bspwm               |
+| Cinnamon             | Awesome             |
+|                      | Fluxbox             |
+|                      | IceWM               |
 
-###### **Desktop Environments**
-- **Xfce**
-- **LXQt**
-- **MATE**
-- **GNOME**
+##### 3. Hardware Acceleration and Distro Container:
+   - Learn more about [hardware acceleration](/docs/hw-acceleration.md).
+   - Check out [distro container usage](/docs/proot-container.md).
 
-###### **Window Managers**
-- **Openbox**
-- **i3**
-- **dwm**
-- **bspwm**
-- **Awesome**
-- **Fluxbox**
-- **IceWM**
-
-##### 4. Hardware Acceleration and Distro Container:
-   - Learn more about [hardware acceleration](/readmes/hw-acceleration.md).
-   - Check out [distro container usage](/readmes/proot-container.md).
-
-##### 5. Start Installation: 
+##### 4. Start Installation: 
 > Full Installation YouTube Video Guide:- [Here](https://youtu.be/SlR9f9hl5CQ?si=7O13ZAzdAnB_wwWw)
 
-> **Note: Fresh installations are recommended for best results.**
-
-> **Note: If you are in android 12 or higher then first disable Phantom Process Killer Guide:-** [Here](https://github.com/atamshkai/Phantom-Process-Killer)
+> [!IMPORTANT]
+> **Fresh installations are recommended for best results.**  
+> **If you are in android 12 or higher then first disable Phantom Process Killer Guide:-** [Here](https://github.com/atamshkai/Phantom-Process-Killer)
+ 
    ```bash
    curl -Lf https://raw.githubusercontent.com/sabamdarif/termux-desktop/main/setup-termux-desktop -o setup-termux-desktop && chmod +x setup-termux-desktop && ./setup-termux-desktop
    ```
 
 - You can also do a lite install which will not install all the optional packages to do that run the install this `LITE=true ./setup-termux-desktop` or `LITE=1  ./setup-termux-desktop` instead of just running `./setup-termux-desktop`
 
-##### 6. Usage Instructions:
+##### 5. Usage Instructions:
    - Commands for starting and stopping Termux:X11 and VNC sessions are provided below.
 
 ---
@@ -164,7 +166,7 @@ Options:
 - `gui -s / --stop` `tx11` *to stop Termux:X11*
 - `gui -k / --kill / -kill` *to kill both vncserver and Termux:x11 At Once*
 - `gui --display / gui -d` `<IP_ADDRESS>:<DISPLAY_PORT>` *To launch the current desktop environment on another x11 display server over the same network*
-    - for more click :- [Here](https://github.com/sabamdarif/termux-desktop/blob/main/readmes/see-more.md#hammer_and_wrenchhow-to-use-x11-display-forwarding-option)
+    - for more click :- [Here](https://github.com/sabamdarif/termux-desktop/blob/main/docs/see-more.md#hammer_and_wrenchhow-to-use-x11-display-forwarding-option)
 
 </details>
 
@@ -209,46 +211,6 @@ Options:
   - `setup-termux-desktop --debug --install` *To create a log of whole installation process*
 
 </details>
-
----
-
-## Screenshots:
-
-### Demo Looks
-
-|XFCE|LXQT|
-|--|--|
-|![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/xfce/look_1/desktop.png)|![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/lxqt/look_2/start-menu.png)|
-|**OPENBOX**|**MATE**|
-|![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/openbox/look_2/desktop.png)|![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/mate/look_1/desktop.png)|
-
-#### [See More...](https://github.com/sabamdarif/termux-desktop?tab=readme-ov-file#2-explore-desktop-styles)
-
-### App Store:
-<img src="https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/termux-app-store.png">
-
-<details>
-<summary><b>Appstore UI:</b></summary>
-
-|Loading|Installing|
-|--|--|
-|![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/appstore-loading.png)|![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/appstore-app-installing.png)|
-|Installed|Prompt|
-|![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/appstore-app-installed.png)|![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/appstore-prmpt.png)|
-</details>
-
----
-
-## Advanced Topics:
-
-### Wine:
-Run Windows applications seamlessly. Learn more [here](https://github.com/sabamdarif/termux-desktop/blob/main/readmes/wine.md#wine_glasslearn-about-wine).
-
-### Distro Containers:
-Install additional apps like LibreOffice. Details [here](/readmes/proot-container.md).
-
-### Hardware Acceleration:
-Enhance performance with GPU acceleration. Learn more [here](/readmes/hw-acceleration.md).
 
 ---
 ## Associated Repos:

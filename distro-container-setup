@@ -1,4 +1,25 @@
 #!/data/data/com.termux/files/usr/bin/bash
+#
+# This script is a module of the 'termux-desktop' project.
+# It handles the setup of the chroot/proot containers.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+# Author     : @sabamdarif
+# License    : GPL-v3
+# Description: setup the distro part of termux-desktop
+# Repository : https://github.com/sabamdarif/termux-desktop
 
 # shellcheck disable=SC2154
 # shellcheck disable=SC2120
@@ -395,7 +416,7 @@ function update_distro_repo() {
     if [[ "$selected_distro" == "debian" ]] || [[ "$selected_distro" == "ubuntu" ]]; then
         "${selected_distro_type}"-distro login "$selected_distro" --shared-tmp -- env DISPLAY=:"$display_number" apt update
         "${selected_distro_type}"-distro login "$selected_distro" --shared-tmp -- env DISPLAY=:"$display_number" apt upgrade -y -o Dpkg::Options::="--force-confnew"
-        "${selected_distro_type}"-distro login "$selected_distro" --shared-tmp -- env DISPLAY=:"$display_number" apt install sudo -y
+        "${selected_distro_type}"-distro login "$selected_distro" --shared-tmp -- env DISPLAY=:"$display_number" apt install sudo apt-file -y
     elif [[ "$selected_distro" == "archlinux" ]]; then
         "${selected_distro_type}"-distro login "$selected_distro" --shared-tmp -- env DISPLAY=:"$display_number" pacman -Syu --noconfirm
         "${selected_distro_type}"-distro login "$selected_distro" --shared-tmp -- env DISPLAY=:"$display_number" pacman -S --noconfirm sudo
@@ -455,7 +476,7 @@ function distro_setup_user() {
         final_user_name="${user_name}"
     fi
     print_to_config "pd_useradd_answer"
-    print_to_config "final_user_name"
+    print_to_config "user_name"
 
     # set password value
     if [[ "$pd_pass_type" == "2" ]]; then
@@ -464,6 +485,7 @@ function distro_setup_user() {
         final_pass="root"
     fi
     print_to_config "pd_pass_type"
+    print_to_config "pass"
 
     if [[ "$pd_useradd_answer" == "y" ]]; then
         # first setup the user
@@ -574,9 +596,9 @@ source $PREFIX/etc/termux-desktop/common_functions
 xhost + >/dev/null 2>&1
 if [ "\$#" -eq 0 ]; then
     if [ "\$PWD" = "$HOME" ]; then
-        ${selected_distro_type}-distro login --user "$final_user_name" "$selected_distro" --shared-tmp --termux-home
+        ${selected_distro_type}-distro login --user "$final_user_name" "$selected_distro" --shared-tmp $termux_home_link
     else
-        ${selected_distro_type}-distro login --user "$final_user_name" "$selected_distro" --shared-tmp --work-dir "\$PWD" --termux-home
+        ${selected_distro_type}-distro login --user "$final_user_name" "$selected_distro" --shared-tmp --work-dir "\$PWD" $termux_home_link
     fi
 
     check_and_create_directory "/data/data/com.termux/files/usr/share/applications/pd_added"
@@ -651,7 +673,7 @@ EOF
     # Make the script executable
     proot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "chmod +x /root/packinstall.sh"
     # Execute the script with all arguments
-    proot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=${TMPDIR}; bash /root/packinstall.sh \$@"
+    proot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=${TMPDIR}; bash /root/packinstall.sh \$*"
 }
 
 package_uninstall_and_remove_from_menu() {
@@ -725,7 +747,7 @@ EOF
     proot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "chmod +x /root/packremove.sh"
 
     # Execute the script with all arguments
-    proot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=/data/data/com.termux/files/usr/tmp; bash /root/packremove.sh \$1 \${@:2}"
+    proot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=/data/data/com.termux/files/usr/tmp; bash /root/packremove.sh \$1 \${*:2}"
 
 }
 
@@ -801,7 +823,7 @@ EOF
     # Make the script executable
     chroot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "chmod +x /root/packinstall.sh"
     # Execute the script with all arguments
-    chroot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=${TMPDIR}; bash /root/packinstall.sh \$@"
+    chroot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=${TMPDIR}; bash /root/packinstall.sh \$*"
 
 }
 
@@ -875,7 +897,7 @@ EOF
     # Make the script executable
     chroot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "chmod +x /root/packremove.sh"
     # Execute the script with all arguments
-    chroot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=/data/data/com.termux/files/usr/tmp; bash /root/packremove.sh \$1 \${@:2}"
+    chroot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=/data/data/com.termux/files/usr/tmp; bash /root/packremove.sh \$1 \${*:2}"
 
 }
 
@@ -883,8 +905,8 @@ update_distro() {
     #################################################
     ############### Handle update part ##############
     #################################################
-    chroot-distro login --user "$final_user_name" "$selected_distro" --shared-tmp --termux-home -- env DISPLAY=:"$display_number" sudo apt update
-    chroot-distro login --user "$final_user_name" "$selected_distro" --shared-tmp --termux-home -- env DISPLAY=:"$display_number" sudo apt-file update
+    chroot-distro login --user "$final_user_name" "$selected_distro" --shared-tmp -- env DISPLAY=:"$display_number" sudo apt update
+    chroot-distro login --user "$final_user_name" "$selected_distro" --shared-tmp -- env DISPLAY=:"$display_number" sudo apt-file update
 
 }  
 TOP_EOF
@@ -1140,7 +1162,7 @@ update_distro() {
     #################################################
     ############### Handle update part ##############
     #################################################
-    chroot-distro login --user "$final_user_name" "$selected_distro" --shared-tmp --termux-home -- env DISPLAY=:"$display_number" sudo pacman -Su
+    chroot-distro login --user "$final_user_name" "$selected_distro" --shared-tmp -- env DISPLAY=:"$display_number" sudo pacman -Su
 }
 TOP_EOF
 
@@ -1215,7 +1237,7 @@ EOF
     # Make the script executable
     proot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "chmod +x /root/packinstall.sh"
     # Execute the script with all arguments
-    proot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=${TMPDIR}; bash /root/packinstall.sh \$@"
+    proot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=${TMPDIR}; bash /root/packinstall.sh \$*"
 
     # Update icon cache and desktop database
     gtk-update-icon-cache
@@ -1289,7 +1311,7 @@ EOF
     proot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "chmod +x /root/packremove.sh"
 
     # Execute the script with all arguments
-    proot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=/data/data/com.termux/files/usr/tmp; bash /root/packremove.sh \$1 \${@:2}"
+    proot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=/data/data/com.termux/files/usr/tmp; bash /root/packremove.sh \$1 \${*:2}"
 
     # Update icon cache and desktop database
     gtk-update-icon-cache
@@ -1361,7 +1383,7 @@ EOF
     # Make the script executable
     chroot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "chmod +x /root/packinstall.sh"
     # Execute the script with all arguments
-    chroot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=${TMPDIR}; bash /root/packinstall.sh \$@"
+    chroot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=${TMPDIR}; bash /root/packinstall.sh \$*"
 
     # Update icon cache and desktop database
     gtk-update-icon-cache
@@ -1435,7 +1457,7 @@ EOF
     chroot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "chmod +x /root/packremove.sh"
 
     # Execute the script with all arguments
-    chroot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=/data/data/com.termux/files/usr/tmp; bash /root/packremove.sh \$1 \${@:2}"
+    chroot-distro login "${selected_distro}" --shared-tmp -- /bin/bash -c "export DISPLAY=:${display_number}; export XDG_RUNTIME_DIR=/data/data/com.termux/files/usr/tmp; bash /root/packremove.sh \$1 \${*:2}"
 
     # Update icon cache and desktop database
     gtk-update-icon-cache
@@ -1446,7 +1468,7 @@ update_distro() {
     #################################################
     ############### Handle update part ##############
     #################################################
-    chroot-distro login --user "$final_user_name" "$selected_distro" --shared-tmp --termux-home -- env DISPLAY=:"$display_number" sudo dnf update
+    chroot-distro login --user "$final_user_name" "$selected_distro" --shared-tmp -- env DISPLAY=:"$display_number" sudo dnf update
 }
 TOP_EOF
 
@@ -1721,13 +1743,13 @@ EOF
 xhost + > /dev/null 2>&1
 case \$1 in
 --nogpu)
-"${selected_distro_type}"-distro login --user "$final_user_name" "$selected_distro" --shared-tmp --termux-home -- eval "env DISPLAY=\$(echo \$DISPLAY) XDG_RUNTIME_DIR=\${TMPDIR} LIBGL_ALWAYS_SOFTWARE=1 MESA_LOADER_DRIVER_OVERRIDE=llvmpipe GALLIUM_DRIVER=llvmpipe \${@:2}"
+"${selected_distro_type}"-distro login --user "$final_user_name" "$selected_distro" --shared-tmp $termux_home_link -- eval "env DISPLAY=\$(echo \$DISPLAY) XDG_RUNTIME_DIR=\${TMPDIR} LIBGL_ALWAYS_SOFTWARE=1 MESA_LOADER_DRIVER_OVERRIDE=llvmpipe GALLIUM_DRIVER=llvmpipe \${@:2}"
 ;;
 --help|-h)
 echo "${G}Type ${C}pdrun PACKAGE-NAME ${G}to start with GPU acceleration${NC}"
 ;;
 *)
-"${selected_distro_type}"-distro login --user "$final_user_name" "$selected_distro" --shared-tmp --termux-home -- eval "env DISPLAY=\$(echo \$DISPLAY) XDG_RUNTIME_DIR=\${TMPDIR} \$selected_pd_hw_method \$@"
+"${selected_distro_type}"-distro login --user "$final_user_name" "$selected_distro" --shared-tmp $termux_home_link -- eval "env DISPLAY=\$(echo \$DISPLAY) XDG_RUNTIME_DIR=\${TMPDIR} \$selected_pd_hw_method \$@"
 ;;
 esac
 EOF
@@ -1764,7 +1786,7 @@ case \$1 in
 echo "${G}Type ${C}pdrun PACKAGE-NAME ${G}to start with gpu acceleration${NC}"
 ;;
 *)
-"${selected_distro_type}"-distro login --user "$final_user_name" "$selected_distro" --shared-tmp --termux-home -- eval "env DISPLAY=\$(echo \$DISPLAY) XDG_RUNTIME_DIR=\${TMPDIR} \$@"
+"${selected_distro_type}"-distro login --user "$final_user_name" "$selected_distro" --shared-tmp $termux_home_link -- eval "env DISPLAY=\$(echo \$DISPLAY) XDG_RUNTIME_DIR=\${TMPDIR} \$@"
 ;;
 esac
 EOF
@@ -1821,6 +1843,11 @@ EOF
 function install_distro_container() {
     setup_distro
     save_path="$distro_path/root"
+    if [[ "$selected_distro_type" == "chroot" ]]; then
+        termux_home_link=" "
+    else
+        termux_home_link="--termux-home"
+    fi
     distro_basic_task
     if [[ "$call_from_change_distro" == false ]]; then
         if [[ "$enable_hw_acc" == "y" ]]; then
@@ -1830,9 +1857,7 @@ function install_distro_container() {
     distro_zsh_setup
     distro_terminal_utility_setup
     distro_create_app_installer
-    if [[ "$selected_distro_type" == "proot" ]]; then
-        add_add_to_menu
-    fi
+    add_add_to_menu
     if [[ "$lite_mode" != "1" && "$lite_mode" != "true" ]]; then
         install_some_required_pack
     fi
@@ -1844,8 +1869,9 @@ function install_distro_container() {
 # Check Installation
 #
 #########################################################################
-function disro_container_install_check() {
-    if [[ -d "$PREFIX/bin/$selected_distro" ]] || [[ -d "$PREFIX/var/lib/proot-distro/installed-rootfs/$selected_distro" ]]; then
+
+function chroot_disro_container_install_check() {
+    if [[ -f "$PREFIX/bin/$selected_distro" ]] && su -c "ls /data/local/chroot-distro/installed-rootfs/$selected_distro" &>/dev/null; then
         echo
         print_success "${BOLD} $selected_distro container setup successfully"
     else
@@ -1856,22 +1882,54 @@ function disro_container_install_check() {
             echo
             print_msg "Trying again... (Attempt $((retry_count + 1)) of $max_retries)"
             install_distro_container
-            if [[ -d "$PREFIX/bin/$selected_distro" ]] || [[ -d "$PREFIX/var/lib/proot-distro/installed-rootfs/$selected_distro" ]]; then
+            if [[ -f "$PREFIX/bin/$selected_distro" ]] && su -c "ls /data/local/chroot-distro/installed-rootfs/$selected_distro" &>/dev/null; then
                 echo
                 print_success "${BOLD} $selected_distro container setup successfully"
                 break
             fi
             ((retry_count++))
-            if [[ "$retry_count" == "$max_retries" ]]; then
-                print_failed "Failed to set up $selected_distro container after multiple attempts. Skipping...${NC}"
+        done
+
+        if [[ "$retry_count" -eq "$max_retries" ]]; then
+            print_failed "Failed to set up $selected_distro container after multiple attempts. Skipping...${NC}"
+        fi
+    fi
+}
+
+function proot_disro_container_install_check() {
+    if [[ -f "$PREFIX/bin/$selected_distro" ]] && [[ -d "$PREFIX/var/lib/proot-distro/installed-rootfs/$selected_distro" ]]; then
+        echo
+        print_success "${BOLD} $selected_distro container setup successfully"
+    else
+        max_retries=2
+        retry_count=0
+        while [[ "$retry_count" -lt "$max_retries" ]]; do
+            print_failed "Some problem occurred in $selected_distro setup"
+            echo
+            print_msg "Trying again... (Attempt $((retry_count + 1)) of $max_retries)"
+            install_distro_container
+            if [[ -f "$PREFIX/bin/$selected_distro" ]] && [[ -d "$PREFIX/var/lib/proot-distro/installed-rootfs/$selected_distro" ]]; then
+                echo
+                print_success "${BOLD} $selected_distro container setup successfully"
                 break
             fi
+            ((retry_count++))
         done
+
+        if [[ "$retry_count" -eq "$max_retries" ]]; then
+            print_failed "Failed to set up $selected_distro container after multiple attempts. Skipping...${NC}"
+        fi
+    fi
+}
+
+function disro_container_install_check() {
+    if [[ "$selected_distro_type" == "chroot" ]]; then
+        chroot_disro_container_install_check
+    else
+        proot_disro_container_install_check
     fi
 }
 
 check_termux
 install_distro_container
-if [[ "$selected_distro_type" == "proot" ]]; then
-    disro_container_install_check
-fi
+disro_container_install_check

@@ -1,4 +1,26 @@
 #!/data/data/com.termux/files/usr/bin/bash
+#
+# Termux Desktop
+# A simple script to easily install supported desktop environments and
+# window managers, along with other essential configurations and tools.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+# Author     : @sabamdarif
+# License    : GPL-v3
+# Description: This script automates the installation of various desktop environments and window managers
+# Repository : https://github.com/sabamdarif/termux-desktop
 
 #########################################################################
 #
@@ -47,7 +69,7 @@ function banner() {
 function check_termux() {
     if [[ -z "$PREFIX" && "$PREFIX" != *"/com.termux/"* ]]; then
         echo "${R}[${R}☓${R}]${R}${BOLD}Please run it inside termux${NC}"
-        exit 0
+        exit 1
     fi
 }
 
@@ -116,7 +138,7 @@ function print_msg() {
 }
 
 function wait_for_keypress() {
-    read -n1 -s -r -p "${R}[${C}-${R}]${G} Press any key to continue, CTRL+c to cancle...${NC}"
+    read -n1 -s -r -p "${R}[${C}-${R}]${G} Press any key to continue, CTRL+c to cancel...${NC}"
     echo
 }
 
@@ -827,7 +849,7 @@ function questions_theme_select() {
     fi
 
     # If custom styles exist, fetch and display them
-    local styles_url="https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/readmes/${de_name}_styles.md"
+    local styles_url="https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/docs/${de_name}_styles.md"
     if curl --head --silent --fail "$styles_url" >/dev/null; then
         print_msg "Downloading list of available styles..."
         check_and_delete "${current_path}/styles.md"
@@ -846,7 +868,7 @@ function questions_theme_select() {
 
         print_msg "Check the $de_name styles preview"
         echo
-        print_msg "From Here:- ${B}https://github.com/sabamdarif/termux-desktop/blob/main/readmes/${de_name}_styles.md"
+        print_msg "From Here:- ${B}https://github.com/sabamdarif/termux-desktop/blob/main/docs/${de_name}_styles.md"
         echo
         print_msg "Number of available custom styles for $de_name is: ${C}${subfolder_count_value}"
         echo
@@ -876,7 +898,7 @@ function questions_theme_select() {
                 echo
                 print_msg "Check the $de_name styles section in GitHub"
                 echo
-                print_msg "${B}https://github.com/sabamdarif/termux-desktop/blob/main/readmes/${de_name}_styles.md"
+                print_msg "${B}https://github.com/sabamdarif/termux-desktop/blob/main/docs/${de_name}_styles.md"
                 echo
             fi
         done
@@ -902,6 +924,8 @@ function ask_to_chose_de() {
     total_custom_mate_setup=$(count_subfolders "$owner" "$repo" "setup-files/mate" "$branch" 2>/dev/null)
     local total_custom_gnome_setup
     total_custom_gnome_setup=$(count_subfolders "$owner" "$repo" "setup-files/gnome" "$branch" 2>/dev/null)
+    local total_custom_cinnamon_setup
+    total_custom_cinnamon_setup=$(count_subfolders "$owner" "$repo" "setup-files/cinnamon" "$branch" 2>/dev/null)
     # calculate availabe styles for all the window managers
     local total_custom_openbox_setup
     total_custom_openbox_setup=$(count_subfolders "$owner" "$repo" "setup-files/openbox" "$branch" 2>/dev/null)
@@ -930,19 +954,21 @@ function ask_to_chose_de() {
     echo
     echo "${Y}5. Gnome($total_custom_gnome_setup)(WIP, so expect bugs)${NC}"
     echo
-    echo "${Y}6. I3Wm($total_custom_i3wm_setup)${NC}"
+    echo "${Y}6. Cinnamon($total_custom_cinnamon_setup)${NC}"
     echo
-    echo "${Y}7. Dwm($total_custom_dwm_setup)${NC}"
+    echo "${Y}7. I3Wm($total_custom_i3wm_setup)${NC}"
     echo
-    echo "${Y}8. Bspwm($total_custom_bspwm_setup)${NC}"
+    echo "${Y}8. Dwm($total_custom_dwm_setup)${NC}"
     echo
-    echo "${Y}9. Awesome($total_custom_awesome_setup)${NC}"
+    echo "${Y}9. Bspwm($total_custom_bspwm_setup)${NC}"
     echo
-    echo "${Y}10. Fluxbox($total_custom_fluxbox_setup)${NC}"
+    echo "${Y}10. Awesome($total_custom_awesome_setup)${NC}"
     echo
-    echo "${Y}11. IceWM($total_custom_icewm_setup)${NC}"
+    echo "${Y}11. Fluxbox($total_custom_fluxbox_setup)${NC}"
     echo
-    select_an_option 11 1 desktop_answer
+    echo "${Y}12. IceWM($total_custom_icewm_setup)${NC}"
+    echo
+    select_an_option 12 1 desktop_answer
     # set the variables based on chosen de
     sys_icons_folder="$PREFIX/share/icons"
     sys_themes_folder="$PREFIX/share/themes"
@@ -972,31 +998,36 @@ function ask_to_chose_de() {
         icons_folder="$HOME/.icons"
         de_startup="gnome-session-minimal"
     elif [[ "$desktop_answer" == "6" ]]; then
+        de_name="cinnamon"
+        themes_folder="$HOME/.themes"
+        icons_folder="$HOME/.icons"
+        de_startup="cinnamon-session"
+    elif [[ "$desktop_answer" == "7" ]]; then
         de_name="i3wm"
         themes_folder="$HOME/.themes"
         icons_folder="$HOME/.icons"
         de_startup="i3"
-    elif [[ "$desktop_answer" == "7" ]]; then
+    elif [[ "$desktop_answer" == "8" ]]; then
         de_name="dwm"
         themes_folder="$HOME/.themes"
         icons_folder="$HOME/.icons"
         de_startup="dwm"
-    elif [[ "$desktop_answer" == "8" ]]; then
+    elif [[ "$desktop_answer" == "9" ]]; then
         de_name="bspwm"
         themes_folder="$HOME/.themes"
         icons_folder="$HOME/.icons"
         de_startup="bspwm"
-    elif [[ "$desktop_answer" == "9" ]]; then
+    elif [[ "$desktop_answer" == "10" ]]; then
         de_name="awesome"
         themes_folder="$HOME/.themes"
         icons_folder="$HOME/.icons"
         de_startup="awesome"
-    elif [[ "$desktop_answer" == "10" ]]; then
+    elif [[ "$desktop_answer" == "11" ]]; then
         de_name="fluxbox"
         themes_folder="$HOME/.themes"
         icons_folder="$HOME/.icons"
         de_startup="fluxbox"
-    elif [[ "$desktop_answer" == "11" ]]; then
+    elif [[ "$desktop_answer" == "12" ]]; then
         de_name="icewm"
         themes_folder="$HOME/.themes"
         icons_folder="$HOME/.icons"
@@ -1195,24 +1226,24 @@ function questions_setup_manual() {
     banner
     print_msg "${BOLD}Select Your shell${NC}"
     echo
-    echo "${Y}1. Custom Bash prompt${NC}"
+    echo "${Y}1. Zsh + zinit${NC}"
     echo
     echo "${Y}2. Custom Bash prompt + ble.sh (ble.sh kind of buggy right now)${NC}"
     echo
-    echo "${Y}3. Zsh + zinit${NC}"
+    echo "${Y}3. Custom Bash prompt${NC}"
     echo
     select_an_option 4 1 chosen_shell_answer
     case "$chosen_shell_answer" in
-    1) chosen_shell_name="bash" ;;
+    1) chosen_shell_name="zsh" ;;
     2) chosen_shell_name="bash_with_ble" ;;
-    3) chosen_shell_name="zsh" ;;
+    3) chosen_shell_name="bash" ;;
     esac
     if [[ "$chosen_shell_name" == "zsh" ]]; then
         questions_zsh_theme_select
     fi
     banner
     echo
-    print_msg "${B}Know More About Terminal Utility:- https://github.com/sabamdarif/termux-desktop/blob/main/readmes/see-more.md#hammer_and_wrenchlearn-about-terminal-utilities"
+    print_msg "${B}Know More About Terminal Utility:- https://github.com/sabamdarif/termux-desktop/blob/main/docs/see-more.md#hammer_and_wrenchlearn-about-terminal-utilities"
     echo
     confirmation_y_or_n "Do you want install some terminal utility to make better terminal exprience" terminal_utility_setup_answer
     banner
@@ -1294,7 +1325,7 @@ It will help you to install apps that aren't available in Termux.
 So it will set up a Linux distro container and add options to install those apps.
 Also, you can launch those installed apps from Termux like other apps.
 "
-    echo "Learn More:- https://github.com/sabamdarif/termux-desktop/blob/main/readmes/proot-container.md"
+    echo "Learn More:- https://github.com/sabamdarif/termux-desktop/blob/main/docs/proot-container.md"
     echo
     confirmation_y_or_n "Do you want to add a Linux container" distro_add_answer
 }
@@ -1360,8 +1391,8 @@ function distro_hw_questions() {
                 pd_hw_answer="virgl"
             fi
             ;;
-        "freedreno")
-            pd_hw_answer="freedreno"
+        "freedreno_kgsl" | "mesa_freedreno" | "mesa_zink_freedreno")
+            pd_hw_answer="turnip"
             ;;
         *)
             banner
@@ -1392,7 +1423,7 @@ function distro_hw_questions() {
 function exp_vulkan_support() {
     print_msg "${BOLD}First Read This"
     echo
-    print_msg "${B}This:- https://github.com/sabamdarif/termux-desktop/blob/main/readmes/hw-acceleration.md"
+    print_msg "${B}This:- https://github.com/sabamdarif/termux-desktop/blob/main/docs/hw-acceleration.md"
     echo
     print_msg "${BOLD}Select the vulkan driver"
     echo
@@ -1402,7 +1433,9 @@ function exp_vulkan_support() {
     echo
     echo "${Y}3. mesa-zink-vulkan-icd-freedreno (Turnip) (adreno only)${NC}"
     echo
-    echo "${Y}4. will use the old virgl way${NC}"
+    echo "${Y}4. mesa-vulkan-icd-freedreno (Kgsl) (adreno only)${NC}"
+    echo
+    echo "${Y}5. will use the old virgl way${NC}"
     echo
     select_an_option 4 1 exp_termux_vulkan_hw_answer_num
 
@@ -1411,7 +1444,8 @@ function exp_vulkan_support() {
     1) exp_termux_vulkan_hw_answer="vulkan_icd" ;;
     2) exp_termux_vulkan_hw_answer="mesa_freedreno" ;;
     3) exp_termux_vulkan_hw_answer="mesa_zink_freedreno" ;;
-    4) exp_termux_vulkan_hw_answer="skip" ;;
+    4) exp_termux_vulkan_hw_answer="freedreno_kgsl" ;;
+    5) exp_termux_vulkan_hw_answer="skip" ;;
     esac
 }
 
@@ -1447,33 +1481,25 @@ function exp_termux_gl_hw_support() {
     7) exp_termux_gl_hw_answer="zink_with_mesa_zink" ;;
     esac
     termux_hw_answer="${exp_termux_gl_hw_answer}"
-
-    if [[ "$distro_add_answer" == "y" ]]; then
-        case "$exp_termux_gl_hw_answer" in
-        "virgl" | "virgl_vulkan")
-            if [[ "$device_gpu_model_name" == "adreno" ]]; then
-                distro_hw_questions
-            else
-                pd_hw_answer="virgl"
-            fi
-            ;;
-        *)
-            distro_hw_questions
-            ;;
-        esac
-    fi
+    distro_hw_questions
 }
 
 #NOTE: it first call exp_vulkan_support then if user select vulkan_icd the it will go for exp_termux_gl_hw_answer (as name suggest it setup the opengl driver for termux) and user type 4=skip then it will go for everything using virgl option (it's kind of same as exp_termux_gl_hw_answer), then when it done for termux part it will call distro_hw_questions to setup hwa for the selected proot-distro
 function hw_questions() {
     banner
     exp_vulkan_support
-    if [[ "$exp_termux_vulkan_hw_answer" == "vulkan_icd" ]]; then
+    if [[ "$exp_termux_vulkan_hw_answer" == "vulkan_icd" ]] || [[ "$exp_termux_vulkan_hw_answer" == "mesa_freedreno" ]] || [[ "$exp_termux_vulkan_hw_answer" == "mesa_zink_freedreno" ]]; then
         exp_termux_gl_hw_support
+    elif [[ "$exp_termux_vulkan_hw_answer" == "freedreno_kgsl" ]]; then
+        termux_hw_answer="${exp_termux_vulkan_hw_answer}"
+        distro_hw_questions
     elif [[ "$exp_termux_vulkan_hw_answer" == "skip" ]]; then
         print_msg "${BOLD}First Read This"
         echo
-        print_msg "${B}This:- https://github.com/sabamdarif/termux-desktop/blob/main/readmes/hw-acceleration.md"
+        print_msg "${B}This:- https://github.com/sabamdarif/termux-desktop/blob/main/docs/hw-acceleration.md"
+        echo
+        print_msg "${BOLD}Select Hardware Acceleration API"
+        echo
         echo
         print_msg "${BOLD}Select Hardware Acceleration API"
         echo
@@ -1497,9 +1523,6 @@ function hw_questions() {
         4) termux_hw_answer="virgl_vulkan" ;;
         5) termux_hw_answer="zink_virgl" ;;
         esac
-        distro_hw_questions
-    elif [[ "$exp_termux_vulkan_hw_answer" == "mesa_zink_freedreno" ]] || [[ "$exp_termux_vulkan_hw_answer" == "mesa_freedreno" ]]; then
-        termux_hw_answer="freedreno"
         distro_hw_questions
     fi
 }
@@ -1589,7 +1612,6 @@ function setup_user_name_only() {
             ;;
         esac
     done
-    print_to_config "user_name"
 }
 
 function setup_user_name_and_pass() {
@@ -1642,8 +1664,6 @@ function setup_user_name_and_pass() {
             ;;
         esac
     done
-    print_to_config "user_name"
-    print_to_config "pass"
 }
 
 function distro_questions() {
@@ -2113,13 +2133,19 @@ function chose_mirror() {
 
 function update_sys() {
     banner
-    print_msg "${BOLD}Updating System...."
-    echo
-
     if [[ "$PACKAGE_MANAGER" == "pacman" ]]; then
+        print_msg "${BOLD}Updating System...."
         pacman -Syu --noconfirm
     else
-        chose_mirror
+        print_msg "Do you want to run a speed test to find the fastest repo for you?"
+        echo -e "The speed test will check all mirrors in all
+        mirror groups, or only the group you selected.
+        This process may take some time."
+        confirmation_y_or_n "Do you want to continue" confirmation_speedtest
+        if [[ "$confirmation_speedtest" == "y" ]]; then
+            chose_mirror
+        fi
+        print_msg "${BOLD}Updating System...."
         apt update -y -o Dpkg::Options::="--force-confnew"
         apt upgrade -y -o Dpkg::Options::="--force-confnew"
     fi
@@ -2425,9 +2451,13 @@ function install_desktop() {
         cd ..
         check_and_delete "gnome_packages_files"
         package_install_and_check "xfce4-terminal eog"
+    elif [[ "$de_name" == "cinnamon" ]]; then
+        print_msg "${BOLD}Installing Cinnamon"
+        echo
+        package_install_and_check "cinnamon nemo gnome-terminal gnome-screenshot eog"
     fi
     if [[ "$lite_mode" != "1" && "$lite_mode" != "true" ]]; then
-        package_install_and_check "xwayland pulseaudio file-roller pavucontrol gnome-font-viewer evince galculator libwayland-protocols xorg-xrdb"
+        package_install_and_check "file-roller pavucontrol gnome-font-viewer evince galculator xorg-xrdb"
     fi
     # Uncomment if additional package installation is needed
     # if [[ "$distro_add_answer" == "y" ]]; then
@@ -2543,7 +2573,16 @@ function theme_installer() {
     check_and_create_directory "$themes_folder"
     download_and_extract "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/setup-files/setup-files/${de_name}/look_${style_answer}/theme.tar.gz" "$themes_folder"
 
-    print_msg "Making Additional Configuration..."
+    if [[ -d "$HOME/.config" ]] || [[ -d "$HOME/.local" ]]; then
+        print_msg "Creating backup of old config..."
+        must_back_folders=("$HOME/.config")
+        if [[ -d "$HOME/.local" ]]; then
+            must_back_folders+=("$HOME/.local")
+        fi
+        tar -cJf "$HOME/old-config-$(date +%Y%m%d-%H%M%S).tar.xz" "${must_back_folders[@]}"
+    fi
+
+    print_msg "Applying Custom Configuration..."
     echo
     check_and_create_directory "$HOME/.config"
     set_config_dir
@@ -3122,12 +3161,9 @@ tx11start --debug    - Show debug log
       else
         ${initialize_server_method} >/dev/null 2>&1 &
       fi
-      export ${gpu_environment_variable}
-      export ${hw_method}
-    else
-      export LIBGL_ALWAYS_SOFTWARE=1
-      export MESA_LOADER_DRIVER_OVERRIDE=llvmpipe
-      export GALLIUM_DRIVER=llvmpipe
+      export ${gpu_environment_variable} ${hw_method}   
+  else
+        export LIBGL_ALWAYS_SOFTWARE=1 MESA_LOADER_DRIVER_OVERRIDE=llvmpipe GALLIUM_DRIVER=llvmpipe      
     fi
 
     sleep 1
@@ -3559,7 +3595,7 @@ forward_display() {
 
 case $1 in
 --start | -l)
-    case \$2 in
+    case $2 in
     tx11)
         tx11start
         ;;
@@ -4041,6 +4077,10 @@ function terminal_utility_setup() {
         download_file "$PREFIX/bin/termux-ssh" "https://raw.githubusercontent.com/sabamdarif/simple-linux-scripts/main/termux-ssh" && chmod +x "$PREFIX/bin/termux-ssh"
         download_file "$PREFIX/bin/termux-fastest-repo" "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/other/termux-fastest-repo"
         chmod +x "$PREFIX/bin/termux-fastest-repo"
+        download_file "$PREFIX/bin/termux-color" "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/other/termux-color"
+        chmod +x "$PREFIX/bin/termux-color"
+        download_file "$PREFIX/bin/termux-nf" "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/other/termux-nf"
+        chmod +x "$PREFIX/bin/termux-nf"
         cp "$shell_rc_file" "${shell_rc_file}-2"
         check_and_backup "$shell_rc_file"
         mv "${shell_rc_file}-2" "${shell_rc_file}"
@@ -4325,7 +4365,7 @@ function notes() {
     if [[ "$distro_add_answer" == "y" ]]; then
         print_msg "${C}${BOLD}See how to use Linux distro container"
         echo
-        print_msg "${C}URL:- ${B}https://github.com/sabamdarif/termux-desktop/blob/main/readmes/proot-container.md"
+        print_msg "${C}URL:- ${B}https://github.com/sabamdarif/termux-desktop/blob/main/docs/proot-container.md"
     fi
 }
 
@@ -4376,6 +4416,8 @@ function remove_termux_desktop() {
             elif [[ "$de_name" == "gnome" ]]; then
                 package_check_and_remove "gnome*"
                 package_check_and_remove "thunar xfce4-terminal"
+            elif [[ "$de_name" == "cinnamon" ]]; then
+                package_check_and_remove "cinnamon nemo gnome-terminal gnome-screenshot eog"
             fi
 
             package_check_and_remove "kvantum xwayland pulseaudio file-roller pavucontrol gnome-font-viewer evince galculator libwayland-protocols xorg-xrdb"
@@ -4507,7 +4549,7 @@ function change_style() {
         read_conf
         gui_check_up
         banner
-        download_file "${current_path}/styles.md" "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/readmes/${de_name}_styles.md"
+        download_file "${current_path}/styles.md" "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/docs/${de_name}_styles.md"
         style_name=$(grep -oP "^## $style_answer\..+?(?=(\n## \d+\.|\Z))" "${current_path}/styles.md" | sed -e "s/^## $style_answer\. //" -e "s/:$//" -e 's/^[[:space:]]*//;s/[[:space:]]*$//')
         check_and_delete "${current_path}/styles.md"
         print_msg "Your currently installed style is ${C}${BOLD}$style_name"
@@ -4873,7 +4915,7 @@ function some_fixes() {
     # fix blank export in tx11start
     sed -i '/^export\s*$/d' "$PREFIX/bin/tx11start"
     # tx11start and vncstart
-    if [[ "$termux_hw_answer" == "freedreno" ]] || [[ $termux_hw_answer == "zink_with_mesa" ]] || [[ $termux_hw_answer == "zink_with_mesa_zink" ]]; then
+    if [[ "$termux_hw_answer" == "mesa_freedreno" ]] || [[ "$termux_hw_answer" == "mesa_zink_freedreno" ]] || [[ "$termux_hw_answer" == "freedreno_kgsl" ]] || [[ $termux_hw_answer == "zink_with_mesa" ]] || [[ $termux_hw_answer == "zink_with_mesa_zink" ]]; then
         sed -i "/if ! \$use_nogpu; then/,/fi/ {/if \$use_debug; then/,/fi/d}" "$PREFIX/bin/tx11start"
         sed -i "s/^[[:space:]]*&[[:space:]]*$/ /" "$PREFIX/bin/vncstart"
     fi
@@ -4889,22 +4931,27 @@ function some_fixes() {
             sed -i 's|/data/data/com.termux/files/usr/bin/code-oss|/data/data/com.termux/files/usr/bin/code-oss --enable-features=Vulkan|g' /data/data/com.termux/files/usr/share/applications/code-oss*
         fi
     fi
-    # some fixes for gnome-desktop
-    sed -i 's|<policy user="root">|<policy user="\$USER">|' "$PREFIX/share/dbus-1/system.d/org.freedesktop.UPower.conf"
-    cat <<EOF >"$PREFIX/share/gnome-session/sessions/minimal.session"
+    # some fixes for gnome and cinnamon desktop
+
+    if [[ "$de_name" == "gnome" ]] || [[ "$de_name" == "cinnamon" ]]; then
+        sed -i "s|<policy user=\".*\">|<policy user=\"$(whoami)\">|" "$PREFIX/share/dbus-1/system.d/org.freedesktop.UPower.conf"
+        if [[ "$de_name" == "gnome" ]]; then
+            cat <<EOF >"$PREFIX/share/gnome-session/sessions/minimal.session"
 [GNOME Session]
 Name=Minimal GNOME
 RequiredComponents=org.gnome.Shell;org.gnome.SettingsDaemon.A11ySettings;org.gnome.SettingsDaemon.Color;org.gnome.SettingsDaemon.Datetime;org.gnome.SettingsDaemon.Housekeeping;org.gnome.SettingsDaemon.Keyboard;org.gnome.SettingsDaemon.Sound;
 DefaultProvider-wm=gnome-shell
 DesktopName=GNOME
 EOF
-    cat <<EOF >"$PREFIX/bin/gnome-session-minimal"
+            cat <<EOF >"$PREFIX/bin/gnome-session-minimal"
 rm -rf /data/data/com.termux/files/usr/var/run/dbus/pid
 dbus-launch --config-file $PREFIX/share/dbus-1/system.conf
-UPOWER_CONF_FILE_NAME=$PREFIX/etc/UPower/UPower.conf $PREFIX/libexec/upowerd -d
+UPOWER_CONF_FILE_NAME=$PREFIX/etc/UPower/UPower.conf $PREFIX/libexec/upowerd -d &
 gnome-session --session=minimal \$@
 EOF
-    chmod +x "$PREFIX/bin/gnome-session-minimal"
+            chmod +x "$PREFIX/bin/gnome-session-minimal"
+        fi
+    fi
 }
 
 # add the basic details into a config file
@@ -5075,10 +5122,6 @@ function reset_changes() {
 
         check_and_delete "$shell_rc_file"
         check_and_restore "$shell_rc_file"
-        check_and_backup "$config_file"
-        touch "$config_file"
-        print_basic_details
-
         print_success "${BOLD}Reset successful. Now restart Termux."
     fi
 }
@@ -5117,7 +5160,7 @@ function install_termux_desktop() {
         fi
     fi
     if [[ "$1" == "--local-config" ]] || [[ "$1" == "--config" ]] || [[ "$1" == "-config" ]]; then
-        download_file "${current_path}/styles.md" "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/readmes/${de_name}_styles.md"
+        download_file "${current_path}/styles.md" "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/docs/${de_name}_styles.md"
         style_name=$(grep -oP "^## $style_answer\..+?(?=(\n## \d+\.|\Z))" "${current_path}/styles.md" | sed -e "s/^## $style_answer\. //" -e "s/:$//" -e 's/^[[:space:]]*//;s/[[:space:]]*$//')
         check_and_delete "${current_path}/styles.md"
     fi
