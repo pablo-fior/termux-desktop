@@ -1246,8 +1246,10 @@ function questions_setup_manual() {
     print_msg "${B}Know More About Terminal Utility:- https://github.com/sabamdarif/termux-desktop/blob/main/docs/see-more.md#hammer_and_wrenchlearn-about-terminal-utilities"
     echo
     confirmation_y_or_n "Do you want install some terminal utility to make better terminal exprience" terminal_utility_setup_answer
-    banner
-    questions_nerd_font_select
+    if [[ "$terminal_utility_setup_answer" == "y" ]]; then
+        banner
+        questions_nerd_font_select
+    fi
     banner
     echo -e "${R}[${C}-${R}]${B} File Manager Tools Enhancement${NC}
 
@@ -2415,7 +2417,7 @@ function install_desktop() {
         package_install_and_check "dwm"
     elif [[ "$de_name" == "bspwm" ]]; then
         print_msg "${BOLD}Installing BSPWM"
-        package_install_and_check "bspwm"
+        package_install_and_check "bspwm lxappearance xorg-xsetroot rofi feh"
     elif [[ "$de_name" == "awesome" ]]; then
         print_msg "${BOLD}Installing AWESOME WM"
         package_install_and_check "awesome"
@@ -4375,6 +4377,34 @@ function notes() {
 #
 #########################################################################
 
+function remove_desktop_environments() {
+    if [[ "$de_name" == "xfce" ]]; then
+        package_check_and_remove "xfce4 xfce4-goodies xfce4-pulseaudio-plugin xfce4-battery-plugin xfce4-docklike-plugin xfce4-notifyd-static kvantum gtk2-engines-murrine"
+    elif [[ "$de_name" == "lxqt" ]]; then
+        package_check_and_remove "lxqt xorg-xsetroot papirus-icon-theme xwayland kvantum"
+    elif [[ "$de_name" == "openbox" ]]; then
+        package_check_and_remove "openbox polybar xorg-xsetroot lxappearance wmctrl feh xwayland kvantum thunar firefox mpd rofi bmon xcompmgr xfce4-settings gedit"
+    elif [[ "$de_name" == "mate" ]]; then
+        package_check_and_remove "mate*"
+        package_check_and_remove "marco mousepad xfce4-taskmanager lximage-qt"
+    elif [[ "$de_name" == "i3wm" ]]; then
+        package_check_and_remove "i3"
+    elif [[ "$de_name" == "dwm" ]]; then
+        package_check_and_remove "dwm"
+    elif [[ "$de_name" == "bspwm" ]]; then
+        package_check_and_remove "bspwm"
+    elif [[ "$de_name" == "awesome" ]]; then
+        package_check_and_remove "awesome"
+    elif [[ "$de_name" == "fluxbox" ]]; then
+        package_check_and_remove "fluxbox xorg-xsetroot xorg-xprop lxappearance wmctrl feh firefox rofi bmon xcompmgr gtk3 gedit xmllint"
+    elif [[ "$de_name" == "gnome" ]]; then
+        package_check_and_remove "gnome*"
+        package_check_and_remove "thunar xfce4-terminal"
+    elif [[ "$de_name" == "cinnamon" ]]; then
+        package_check_and_remove "cinnamon nemo gnome-terminal gnome-screenshot eog"
+    fi
+}
+
 function remove_termux_desktop() {
     if [[ ! -e "$config_file" ]]; then
         print_msg "${C}${BOLD}Please Install Termux Desktop First"
@@ -4394,32 +4424,7 @@ function remove_termux_desktop() {
             #remove basic packages
             package_check_and_remove "pulseaudio x11-repo tur-repo"
             #remove desktop related packages
-            if [[ "$de_name" == "xfce" ]]; then
-                package_check_and_remove "xfce4 xfce4-goodies xfce4-pulseaudio-plugin xfce4-battery-plugin xfce4-docklike-plugin xfce4-notifyd-static kvantum gtk2-engines-murrine"
-            elif [[ "$de_name" == "lxqt" ]]; then
-                package_check_and_remove "lxqt xorg-xsetroot papirus-icon-theme xwayland kvantum"
-            elif [[ "$de_name" == "openbox" ]]; then
-                package_check_and_remove "openbox polybar xorg-xsetroot lxappearance wmctrl feh xwayland kvantum thunar firefox mpd rofi bmon xcompmgr xfce4-settings gedit"
-            elif [[ "$de_name" == "mate" ]]; then
-                package_check_and_remove "mate*"
-                package_check_and_remove "marco mousepad xfce4-taskmanager lximage-qt"
-            elif [[ "$de_name" == "i3wm" ]]; then
-                package_check_and_remove "i3"
-            elif [[ "$de_name" == "dwm" ]]; then
-                package_check_and_remove "dwm"
-            elif [[ "$de_name" == "bspwm" ]]; then
-                package_check_and_remove "bspwm"
-            elif [[ "$de_name" == "awesome" ]]; then
-                package_check_and_remove "awesome"
-            elif [[ "$de_name" == "fluxbox" ]]; then
-                package_check_and_remove "fluxbox xorg-xsetroot xorg-xprop lxappearance wmctrl feh firefox rofi bmon xcompmgr gtk3 gedit xmllint"
-            elif [[ "$de_name" == "gnome" ]]; then
-                package_check_and_remove "gnome*"
-                package_check_and_remove "thunar xfce4-terminal"
-            elif [[ "$de_name" == "cinnamon" ]]; then
-                package_check_and_remove "cinnamon nemo gnome-terminal gnome-screenshot eog"
-            fi
-
+            remove_desktop_environments
             package_check_and_remove "kvantum xwayland pulseaudio file-roller pavucontrol gnome-font-viewer evince galculator libwayland-protocols xorg-xrdb"
             #remove zsh
             if [[ "$chosen_shell_name" == "zsh" ]]; then
@@ -4780,6 +4785,49 @@ function change_display() {
     else
         print_msg "Changing display port only supported in Termux:x11"
     fi
+}
+
+#########################################################################
+#
+# Change Desktop Environment / window manager
+#
+#########################################################################
+
+function change_de() {
+    read_conf
+    gui_check_up
+    print_msg "Your currently installed environments is: ${C}${BOLD}${de_name}"
+    echo
+    print_warn "${R}Changing environment will delete all you previous configuration for that environment"
+    echo
+    confirmation_y_or_n "Do you want to continue" de_change_confirmation
+    if [[ "$de_change_confirmation" == "y" ]]; then
+        old_de_name="$de_name"
+        ask_to_chose_de
+        update_sys
+        install_required_packages
+        install_desktop
+        if [[ "$style_answer" == "0" ]]; then
+            banner
+            print_msg "${BOLD}Configuring Stock $de_name Style..."
+            echo
+            print_to_config "style_answer"
+            ext_setup_for_stock
+        else
+            setup_config
+        fi
+        gui_launcher
+        print_msg "Removeing old $old_de_name environment"
+        de_name="$old_de_name"
+        remove_desktop_environments
+        unset de_name
+        check_desktop_process
+        add_to_autostart
+        read_conf
+        echo " "
+        print_msg "Your current environment is $de_name"
+    fi
+
 }
 
 #########################################################################
@@ -5229,6 +5277,7 @@ pd,distro  to change installed linux distro container
 hw,hwa     to change hardware acceleration method
 autostart  to change autostart behaviour
 display    to change termux:x11 display port
+de,wm      to switch between diffreent desktop environment or window manager
 h,help     to show help
 
 example uses : --change style
@@ -5279,6 +5328,9 @@ case $1 in
         ;;
     display)
         change_display
+        ;;
+    de | wm)
+        change_de
         ;;
     h | help | -h | --help)
         show_change_help
