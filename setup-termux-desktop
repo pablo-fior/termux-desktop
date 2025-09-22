@@ -38,19 +38,19 @@ BOLD="$(printf '\033[1m')"
 
 cd "$HOME" || exit 1
 ############### Define basic initial values ######################
-termux_desktop_path="/data/data/com.termux/files/usr/etc/termux-desktop"
-config_file="$termux_desktop_path/configuration.conf"
-log_file="/data/data/com.termux/files/home/termux-desktop.log"
-call_from_change_distro=false
-call_from_change_style=false
-is_termux_api_installed=false
-lite_mode="${LITE,,}"
+TERMUX_DESKTOP_PATH="/data/data/com.termux/files/usr/etc/termux-desktop"
+CONFIG_FILE="$TERMUX_DESKTOP_PATH/configuration.conf"
+LOG_FILE="/data/data/com.termux/files/home/termux-desktop.log"
+CALL_FROM_CHANGE_DISTRO=false
+CALL_FROM_CHANGE_STYLE=false
+IS_TERMUX_API_INSTALLED=false
+LITE_MODE="${LITE,,}"
 ##################################################################
 # create detailed log output
 function debug_msg() {
     local debug_message="[DEBUG] running: $BASH_COMMAND"
     echo "$debug_message"
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $debug_message" >>"$log_file"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $debug_message" >>"$LOG_FILE"
 }
 
 function banner() {
@@ -84,28 +84,28 @@ function print_log() {
     timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
     local log_level="${2:-INFO}" # Default log level is INFO if not specified
     local message="$1"
-    echo "[${timestamp}] ${log_level}: ${message}" >>"$log_file"
+    echo "[${timestamp}] ${log_level}: ${message}" >>"$LOG_FILE"
 }
 
 function log_warn() {
     local timestamp
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     local message="$1"
-    echo "[${timestamp}] WARN: ${message}" >>"$log_file"
+    echo "[${timestamp}] WARN: ${message}" >>"$LOG_FILE"
 }
 
 function log_error() {
     local timestamp
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     local message="$1"
-    echo "[${timestamp}] ERROR: ${message}" >>"$log_file"
+    echo "[${timestamp}] ERROR: ${message}" >>"$LOG_FILE"
 }
 
 function log_debug() {
     local timestamp
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     local message="$1"
-    echo "[${timestamp}] DEBUG: ${message}" >>"$log_file"
+    echo "[${timestamp}] DEBUG: ${message}" >>"$LOG_FILE"
 }
 
 function print_success() {
@@ -163,6 +163,7 @@ function check_and_delete() {
 # first check then backup
 function check_and_backup() {
     log_debug "Starting backup for: $*"
+    # shellcheck disable=SC2206
     local files_folders_list=($@)
     local files_folders
     local date_str
@@ -242,6 +243,7 @@ function download_file() {
 # find a backup file which end with a number pattern and restore it
 function check_and_restore() {
     log_debug "Starting restore for: $*"
+    # shellcheck disable=SC2206
     local files_folders_list=($@)
     local files_folders
 
@@ -265,6 +267,7 @@ function check_and_restore() {
 }
 
 function detact_package_manager() {
+    # shellcheck disable=SC1091
     source "/data/data/com.termux/files/usr/bin/termux-setup-package-manager"
     if [[ "$TERMUX_APP_PACKAGE_MANAGER" == "apt" ]]; then
         PACKAGE_MANAGER="apt"
@@ -279,6 +282,7 @@ function detact_package_manager() {
 # will check if the package is already installed or not, if it installed then reinstall and print success/failed message
 function package_install_and_check {
     log_debug "Starting package installation for: $*"
+    # shellcheck disable=SC2206
     packs_list=($@)
     # pacman part
     if [[ "$PACKAGE_MANAGER" == "pacman" ]]; then
@@ -376,13 +380,16 @@ function package_install_and_check {
 # will check the package is installed or not then remove it
 function package_check_and_remove() {
     log_debug "Starting package removal for: $*"
-    local packs_list=($@)
+    local packs_list
+    # shellcheck disable=SC2206
+    packs_list=($@)
 
     if [[ "$PACKAGE_MANAGER" == "pacman" ]]; then
         for package_name in "${packs_list[@]}"; do
             if [[ "$package_name" == *"*"* ]]; then
                 log_debug "Processing wildcard pattern: $package_name"
-                local packages=$(pacman -Qsq | grep -E "^${package_name//\*/.*}$")
+                local packages
+                packages=$(pacman -Qsq | grep -E "^${package_name//\*/.*}$")
                 if [[ -z "$packages" ]]; then
                     print_success "No installed packages found matching: ${C}$package_name"
                     continue
@@ -431,7 +438,8 @@ function package_check_and_remove() {
         for package_name in "${packs_list[@]}"; do
             if [[ "$package_name" == *"*"* ]]; then
                 log_debug "Processing wildcard pattern: $package_name"
-                local packages=$(dpkg-query -W -f='${binary:Package}\n' "${package_name}" 2>/dev/null | grep -v ' ')
+                local packages
+                packages=$(dpkg-query -W -f='${binary:Package}\n' "${package_name}" 2>/dev/null | grep -v ' ')
 
                 if [[ -z "$packages" ]]; then
                     print_success "No installed packages found matching: ${C}$package_name"
@@ -703,12 +711,12 @@ function select_an_option() {
 }
 
 function read_conf() {
-    if [[ ! -f "$config_file" ]]; then
-        print_failed " Configuration file $config_file not found"
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+        print_failed " Configuration file $CONFIG_FILE not found"
         exit 0
     fi
-
-    source "$config_file"
+    # shellcheck disable=SC1090
+    source "$CONFIG_FILE"
     print_success "Configuration variables loaded"
     validate_required_vars
 }
@@ -718,10 +726,10 @@ function print_to_config() {
     local var_value="${2:-${!var_name}}"
     local IFS=$' \t\n'
 
-    if grep -q "^${var_name}=" "$config_file" 2>/dev/null; then
-        sed -i "s|^${var_name}=.*|${var_name}=${var_value}|" "$config_file"
+    if grep -q "^${var_name}=" "$CONFIG_FILE" 2>/dev/null; then
+        sed -i "s|^${var_name}=.*|${var_name}=${var_value}|" "$CONFIG_FILE"
     else
-        echo "${var_name}=${var_value}" >>"$config_file"
+        echo "${var_name}=${var_value}" >>"$CONFIG_FILE"
     fi
     log_debug "$var_name $var_value"
 }
@@ -742,7 +750,7 @@ function validate_required_vars() {
         # Hardware acceleration variables
         "enable_hw_acc"
         # Configuration paths
-        "config_file"
+        "CONFIG_FILE"
         "themes_folder"
         "icons_folder"
         # apps
@@ -762,7 +770,7 @@ function validate_required_vars() {
     # If hardware acceleration is enabled, add required variables
     if [[ "$enable_hw_acc" == "y" ]]; then
         required_vars+=(
-            "device_gpu_model_name"
+            "GPU_NAME"
             "exp_termux_vulkan_hw_answer"
             "termux_hw_answer"
         )
@@ -1246,10 +1254,8 @@ function questions_setup_manual() {
     print_msg "${B}Know More About Terminal Utility:- https://github.com/sabamdarif/termux-desktop/blob/main/docs/see-more.md#hammer_and_wrenchlearn-about-terminal-utilities"
     echo
     confirmation_y_or_n "Do you want install some terminal utility to make better terminal exprience" terminal_utility_setup_answer
-    if [[ "$terminal_utility_setup_answer" == "y" ]]; then
-        banner
-        questions_nerd_font_select
-    fi
+    banner
+    questions_nerd_font_select
     banner
     echo -e "${R}[${C}-${R}]${B} File Manager Tools Enhancement${NC}
 
@@ -1333,7 +1339,7 @@ Also, you can launch those installed apps from Termux like other apps.
 }
 
 function setup_device_gpu_model() {
-    if [[ -z "$gpu_name" ]] || [[ "$gpu_name" == "unknown" ]]; then
+    if [[ -z "$GPU_NAME" ]] || [[ "$GPU_NAME" == "unknown" ]]; then
         while true; do
             banner
             print_warn "Unable to auto detect GPU"
@@ -1348,7 +1354,7 @@ function setup_device_gpu_model() {
             echo
             echo "${Y}4. Others (Unstable)${NC}"
             echo
-            read -p "${Y}Enter your choice (1-4): ${NC}" device_gpu_model
+            read -r -p "${Y} Enter your choise [1-4]: ${NC}" device_gpu_model
 
             if [[ "$device_gpu_model" =~ ^[1-4]$ ]]; then
                 print_success "Continuing with answer: $device_gpu_model"
@@ -1360,13 +1366,11 @@ function setup_device_gpu_model() {
 
         # set gpu model name
         case "$device_gpu_model" in
-        1) device_gpu_model_name="adreno" ;;
-        2) device_gpu_model_name="mali" ;;
-        3) device_gpu_model_name="xclipse" ;;
-        4) device_gpu_model_name="others" ;;
+        1) GPU_NAME="adreno" ;;
+        2) GPU_NAME="mali" ;;
+        3) GPU_NAME="xclipse" ;;
+        4) GPU_NAME="others" ;;
         esac
-    else
-        device_gpu_model_name="$gpu_name"
     fi
 
 }
@@ -1376,12 +1380,12 @@ function distro_hw_questions() {
     if [[ "$distro_add_answer" == "y" ]]; then
         case "$termux_hw_answer" in
         "virgl" | "virgl_vulkan")
-            if [[ "$device_gpu_model_name" == "adreno" ]]; then
+            if [[ "$GPU_NAME" == "adreno" ]]; then
                 banner
                 print_msg "${BOLD}Select Hardware Acceleration Driver For Linux Container"
-                echo "${Y}1. OpenGL (VIRGL ANGLE)${NC}"
+                echo "${Y}1. VirGL + ANGLE (GPU Passthrough via virpipe)${NC}"
                 echo
-                echo "${Y}2. Turnip (Adreno GPU Only)${NC}"
+                echo "${Y}2. Turnip (Native Adreno Vulkan Driver)${NC}"
                 echo
                 select_an_option 2 1 pd_hw_answer_num
                 case "$pd_hw_answer_num" in
@@ -1402,11 +1406,11 @@ function distro_hw_questions() {
             echo
             print_msg "If You Skip It, It Will Use The Previous Selection"
             echo
-            echo "${Y}1. Vulkan (ZINK)${NC}"
+            echo "${Y}1. Mesa Zink (Vulkan-to-OpenGL Translation)${NC}"
             echo
-            echo "${Y}2. OpenGL (VIRGL)${NC}"
+            echo "${Y}2. VirGL (GPU Passthrough via virpipe)${NC}"
             echo
-            echo "${Y}3. Turnip (Adreno GPU Only)${NC}"
+            echo "${Y}3. Turnip (Native Adreno Vulkan Driver)${NC}"
             echo
             select_an_option 3 1 pd_hw_answer_num
 
@@ -1429,26 +1433,52 @@ function exp_vulkan_support() {
     echo
     print_msg "${BOLD}Select the vulkan driver"
     echo
-    echo "${Y}1. vulkan-icd-wrapper${NC}"
-    echo
-    echo "${Y}2. mesa-vulkan-icd-freedreno (Turnip) (adreno only)${NC}"
-    echo
-    echo "${Y}3. mesa-zink-vulkan-icd-freedreno (Turnip) (adreno only)${NC}"
-    echo
-    echo "${Y}4. mesa-vulkan-icd-freedreno (Kgsl) (adreno only)${NC}"
-    echo
-    echo "${Y}5. will use the old virgl way${NC}"
-    echo
-    select_an_option 4 1 exp_termux_vulkan_hw_answer_num
+    if [[ "${termux_arch}" == "aarch64" ]]; then
+        echo "${Y}1. vulkan-wrapper-android${NC}"
+        echo
+        echo "${Y}2. vulkan-wrapper-android (leegao's fork)${NC}"
+        echo
+        echo "${Y}3. mesa-vulkan-icd-freedreno (Turnip) (adreno only)${NC}"
+        echo
+        echo "${Y}4. mesa-zink-vulkan-icd-freedreno (Turnip) (adreno only)${NC}"
+        echo
+        echo "${Y}5. mesa-vulkan-icd-freedreno (Kgsl) (adreno only)${NC}"
+        echo
+        echo "${Y}6. will use the old virgl way${NC}"
+        echo
+        select_an_option 6 1 exp_termux_vulkan_hw_answer_num
 
-    # set gpu api name
-    case "$exp_termux_vulkan_hw_answer_num" in
-    1) exp_termux_vulkan_hw_answer="vulkan_icd" ;;
-    2) exp_termux_vulkan_hw_answer="mesa_freedreno" ;;
-    3) exp_termux_vulkan_hw_answer="mesa_zink_freedreno" ;;
-    4) exp_termux_vulkan_hw_answer="freedreno_kgsl" ;;
-    5) exp_termux_vulkan_hw_answer="skip" ;;
-    esac
+        # set gpu api name
+        case "$exp_termux_vulkan_hw_answer_num" in
+        1) exp_termux_vulkan_hw_answer="vulkan_wrapper_android" ;;
+        2) exp_termux_vulkan_hw_answer="vulkan_wrapper_android_leegaos_fork" ;;
+        3) exp_termux_vulkan_hw_answer="mesa_freedreno" ;;
+        4) exp_termux_vulkan_hw_answer="mesa_zink_freedreno" ;;
+        5) exp_termux_vulkan_hw_answer="freedreno_kgsl" ;;
+        6) exp_termux_vulkan_hw_answer="skip" ;;
+        esac
+    else
+        echo "${Y}1. vulkan-wrapper-android${NC}"
+        echo
+        echo "${Y}2. mesa-vulkan-icd-freedreno (Turnip) (adreno only)${NC}"
+        echo
+        echo "${Y}3. mesa-zink-vulkan-icd-freedreno (Turnip) (adreno only)${NC}"
+        echo
+        echo "${Y}4. mesa-vulkan-icd-freedreno (Kgsl) (adreno only)${NC}"
+        echo
+        echo "${Y}5. will use the old virgl way${NC}"
+        echo
+        select_an_option 5 1 exp_termux_vulkan_hw_answer_num
+
+        # set gpu api name
+        case "$exp_termux_vulkan_hw_answer_num" in
+        1) exp_termux_vulkan_hw_answer="vulkan_wrapper_android" ;;
+        2) exp_termux_vulkan_hw_answer="mesa_freedreno" ;;
+        3) exp_termux_vulkan_hw_answer="mesa_zink_freedreno" ;;
+        4) exp_termux_vulkan_hw_answer="freedreno_kgsl" ;;
+        5) exp_termux_vulkan_hw_answer="skip" ;;
+        esac
+    fi
 }
 
 function exp_termux_gl_hw_support() {
@@ -1456,19 +1486,19 @@ function exp_termux_gl_hw_support() {
     echo
     print_msg "${BOLD}It will be used to enable opengl support"
     echo
-    echo "${Y}1. Vulkan (ZINK)${NC}"
+    echo "${Y}1. Mesa Zink (Vulkan-to-OpenGL) + VirGL Server${NC}"
     echo
-    echo "${Y}2. OpenGL (VIRGL)${NC}"
+    echo "${Y}2. VirGL (GPU Passthrough via virpipe)${NC}"
     echo
-    echo "${Y}3. OpenGL (VIRGL ANGLE)${NC}"
+    echo "${Y}3. VirGL + ANGLE OpenGL Backend${NC}"
     echo
-    echo "${Y}4. Vulkan (VIRGL ANGLE)${NC}"
+    echo "${Y}4. VirGL + ANGLE Vulkan Backend${NC}"
     echo
-    echo "${Y}5. OpenGL ES (ZINK VIRGL)${NC}"
+    echo "${Y}5. Mesa Zink + VirGL (Vulkan-to-OpenGL via VirGL)${NC}"
     echo
-    echo "${Y}6. The Vulkan-Icd-Wrapper Driver With Mesa${NC}"
+    echo "${Y}6. Mesa Zink Direct (Native Vulkan-to-OpenGL)${NC}"
     echo
-    echo "${Y}7. The Vulkan-Icd-Wrapper Driver With Mesa-Zink${NC}"
+    echo "${Y}7. Mesa Zink Direct with Mesa-zink (Native Vulkan-to-OpenGL)${NC}"
     echo
     select_an_option 7 1 exp_termux_gl_hw_answer_num
 
@@ -1486,11 +1516,11 @@ function exp_termux_gl_hw_support() {
     distro_hw_questions
 }
 
-#NOTE: it first call exp_vulkan_support then if user select vulkan_icd the it will go for exp_termux_gl_hw_answer (as name suggest it setup the opengl driver for termux) and user type 4=skip then it will go for everything using virgl option (it's kind of same as exp_termux_gl_hw_answer), then when it done for termux part it will call distro_hw_questions to setup hwa for the selected proot-distro
+#NOTE: it first call exp_vulkan_support then if user select vulkan_wrapper_android the it will go for exp_termux_gl_hw_answer (as name suggest it setup the opengl driver for termux) and user type 4=skip then it will go for everything using virgl option (it's kind of same as exp_termux_gl_hw_answer), then when it done for termux part it will call distro_hw_questions to setup hwa for the selected proot-distro
 function hw_questions() {
     banner
     exp_vulkan_support
-    if [[ "$exp_termux_vulkan_hw_answer" == "vulkan_icd" ]] || [[ "$exp_termux_vulkan_hw_answer" == "mesa_freedreno" ]] || [[ "$exp_termux_vulkan_hw_answer" == "mesa_zink_freedreno" ]]; then
+    if [[ "$exp_termux_vulkan_hw_answer" == "vulkan_wrapper_android" ]] || [[ "$exp_termux_vulkan_hw_answer" == "vulkan_wrapper_android_leegaos_fork" ]] || [[ "$exp_termux_vulkan_hw_answer" == "mesa_freedreno" ]] || [[ "$exp_termux_vulkan_hw_answer" == "mesa_zink_freedreno" ]]; then
         exp_termux_gl_hw_support
     elif [[ "$exp_termux_vulkan_hw_answer" == "freedreno_kgsl" ]]; then
         termux_hw_answer="${exp_termux_vulkan_hw_answer}"
@@ -1505,15 +1535,15 @@ function hw_questions() {
         echo
         print_msg "${BOLD}Select Hardware Acceleration API"
         echo
-        echo "${Y}1. Vulkan (ZINK)${NC}"
+        echo "${Y}1. Mesa Zink (Vulkan-to-OpenGL) + VirGL Server${NC}"
         echo
-        echo "${Y}2. OpenGL (VIRGL)${NC}"
+        echo "${Y}2. VirGL (GPU Passthrough via virpipe)${NC}"
         echo
-        echo "${Y}3. OpenGL (VIRGL ANGLE)${NC}"
+        echo "${Y}3. VirGL + ANGLE OpenGL Backend${NC}"
         echo
-        echo "${Y}4. Vulkan (VIRGL ANGLE)${NC}"
+        echo "${Y}4. VirGL + ANGLE Vulkan Backend${NC}"
         echo
-        echo "${Y}5. OpenGL ES (ZINK VIRGL)${NC}"
+        echo "${Y}5. Mesa Zink + VirGL (Vulkan-to-OpenGL via VirGL)${NC}"
         echo
         select_an_option 5 1 termux_hw_answer_num
 
@@ -1581,6 +1611,8 @@ function setup_user_name_only() {
         print_msg "Default Password Will Be Set, Because Sometimes It Might Ask You For Password"
         echo
         print_msg "Password:-${C}root"
+        # set password to root
+        pass=root
         echo
         while true; do
             read -r -p "${R}[${C}-${R}]${G} Input username [Lowercase]: ${NC}" user_name
@@ -1820,8 +1852,10 @@ function define_value_name() {
         hw_acc_confirmation="Disabled"
     fi
     # Vulkan Driver
-    if [[ "$exp_termux_vulkan_hw_answer" == "vulkan_icd" ]]; then
-        vulkan_driver_name="Vulkan ICD Wrapper"
+    if [[ "$exp_termux_vulkan_hw_answer" == "vulkan_wrapper_android" ]]; then
+        vulkan_driver_name="Vulkak Wrapper Android"
+    elif [[ "$exp_termux_vulkan_hw_answer" == "vulkan_wrapper_android_leegaos_fork" ]]; then
+        vulkan_driver_name="Vulkan Wrapper Android (leegao's fork)"
     elif [[ "$exp_termux_vulkan_hw_answer" == "mesa_freedreno" ]]; then
         vulkan_driver_name="Mesa ICD Freedreno"
     elif [[ "$exp_termux_vulkan_hw_answer" == "mesa_zink_freedreno" ]]; then
@@ -1841,9 +1875,9 @@ function define_value_name() {
     elif [[ "$termux_hw_answer" == "zink_virgl" ]]; then
         opengl_driver_name="OpenGL ES (ZINK VIRGL)"
     elif [[ "$termux_hw_answer" == "zink_with_mesa" ]]; then
-        opengl_driver_name="The Vulkan-Icd-Wrapper Driver With Mesa"
+        opengl_driver_name="The vulkan-wrapper-android Driver With Mesa"
     elif [[ "$termux_hw_answer" == "zink_with_mesa_zink" ]]; then
-        opengl_driver_name="The Vulkan-Icd-Wrapper Driver With Mesa-Zink"
+        opengl_driver_name="The vulkan-wrapper-android Driver With Mesa-Zink"
     elif [[ "$termux_hw_answer" == "freedreno" ]]; then
         opengl_driver_name="Freedreno"
     else
@@ -1955,7 +1989,7 @@ function print_conf_info() {
     echo "${G}Hardware Acceleration${NC}"
     echo "   • Status: ${hw_acc_confirmation}"
     if [[ "$enable_hw_acc" == "y" ]]; then
-        echo "   • GPU: $(echo "$device_gpu_model_name" | tr '[:lower:]' '[:upper:]')"
+        echo "   • GPU: $(echo "$GPU_NAME" | tr '[:lower:]' '[:upper:]')"
         echo "   • Vulkan Driver: ${vulkan_driver_name}"
         echo "   • OpenGL Driver: ${opengl_driver_name}"
     fi
@@ -2029,32 +2063,38 @@ ${NC}"
         setup_device_gpu_model
         # download configuration
         download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/configuration/generic/generic.conf"
+        # shellcheck disable=SC1091
         source generic.conf
         check_and_delete "generic.conf"
         local device_brand_name
         device_brand_name=$(getprop ro.product.brand | cut -d ' ' -f 1)
-        if [[ "$device_gpu_model_name" == "adreno" ]]; then
+        if [[ "$GPU_NAME" == "adreno" ]]; then
             download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/configuration/generic/hwa/adreno/generic-adreno.conf"
+            # shellcheck disable=SC1091
             source generic-adreno.conf
             check_and_delete "generic-adreno.conf"
-        elif [[ "$device_gpu_model_name" == "mali" ]]; then
+        elif [[ "$GPU_NAME" == "mali" ]]; then
             if [[ $device_brand_name == samsung* ]]; then
                 download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/configuration/generic/hwa/mali/samsung/generic-samsung-mali.conf"
+                # shellcheck disable=SC1091
                 source generic-samsung-mali.conf
                 check_and_delete "generic-samsung-mali.conf"
             else
                 download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/configuration/generic/hwa/mali/generic-mali.conf"
+                # shellcheck disable=SC1091
                 source generic-mali.conf
                 check_and_delete "generic-mali.conf"
             fi
         else
             download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/configuration/generic/hwa/generic-others.conf"
+            # shellcheck disable=SC1091
             source generic-others.conf
             check_and_delete "generic-others.conf"
         fi
         # setup extra config if it's lite mode install
-        if [[ "$lite_mode" == "1" || "$lite_mode" == "true" ]]; then
+        if [[ "$LITE_MODE" == "1" || "$LITE_MODE" == "true" ]]; then
             download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/configuration/generic/generic-lite.conf"
+            # shellcheck disable=SC1091
             source generic-lite.conf
             check_and_delete "generic-lite.conf"
         fi
@@ -2070,13 +2110,16 @@ ${NC}"
         ask_to_chose_de
         # download configuration
         download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/configuration/generic/generic.conf"
+        # shellcheck disable=SC1091
         source generic.conf
         download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/configuration/generic/nohwa/generic-nohwa.conf"
+        # shellcheck disable=SC1091
         source generic-nohwa.conf
         check_and_delete "generic-nohwa.conf"
         # setup extra config if it's lite mode install
-        if [[ "$lite_mode" == "1" || "$lite_mode" == "true" ]]; then
+        if [[ "$LITE_MODE" == "1" || "$LITE_MODE" == "true" ]]; then
             download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/configuration/generic/generic-lite.conf"
+            # shellcheck disable=SC1091
             source generic-lite.conf
             check_and_delete "generic-lite.conf"
         fi
@@ -2109,6 +2152,7 @@ function load_local_config() {
         exit 1
     fi
     print_success "Using the local configuration file..."
+    # shellcheck disable=SC1090
     source "$config_path"
     sleep 3
     validate_required_vars
@@ -2140,9 +2184,9 @@ function update_sys() {
         pacman -Syu --noconfirm
     else
         print_msg "Do you want to run a speed test to find the fastest repo for you?"
-        echo -e "The speed test will check all mirrors in all
-        mirror groups, or only the group you selected.
-        This process may take some time."
+        echo "The speed test will check all mirrors in all"
+        echo "mirror groups, or only the group you selected."
+        echo "This process may take some time."
         confirmation_y_or_n "Do you want to continue" confirmation_speedtest
         if [[ "$confirmation_speedtest" == "y" ]]; then
             chose_mirror
@@ -2150,6 +2194,32 @@ function update_sys() {
         print_msg "${BOLD}Updating System...."
         apt update -y -o Dpkg::Options::="--force-confnew"
         apt upgrade -y -o Dpkg::Options::="--force-confnew"
+    fi
+}
+
+function get_termux_arch() {
+    APP_ARCH=$(uname -m)
+    SUPPORTED_ARCH="$(getprop ro.product.cpu.abilist)"
+    case "$APP_ARCH" in
+    aarch64) termux_arch="aarch64" ;;
+    armv7* | arm | armv8*) termux_arch="arm" ;;
+    esac
+}
+
+function try_to_autodetect_gpu() {
+    local gpu_egl
+    local gpu_vulkan
+    gpu_egl=$(getprop ro.hardware.egl)
+    gpu_vulkan=$(getprop ro.hardware.vulkan)
+    detected_gpu="$(echo -e "$gpu_egl\n$gpu_vulkan" | sort -u | tr '\n' ' ' | sed 's/ $//')"
+    if echo "$detected_gpu" | grep -iq "adreno"; then
+        GPU_NAME="adreno"
+    elif echo "$detected_gpu" | grep -iqE "mali|meow"; then
+        GPU_NAME="mali"
+    elif echo "$detected_gpu" | grep -iqE "xclipse|samsung"; then
+        GPU_NAME="xclipse"
+    else
+        GPU_NAME="unknown"
     fi
 }
 
@@ -2170,13 +2240,13 @@ function check_system_requirements() {
         echo " "
         sleep 0.3
         # Check if running on Android
-        android_version=$(getprop ro.build.version.release | cut -d'.' -f1)
+        ANDROID_VERSION=$(getprop ro.build.version.release | cut -d'.' -f1)
 
         if [[ "$(uname -o)" == "Android" ]]; then
-            if [[ "$android_version" -ge 8 ]]; then
-                print_success "Running on: ${NC}Android $android_version"
+            if [[ "$ANDROID_VERSION" -ge 8 ]]; then
+                print_success "Running on: ${NC}Android $ANDROID_VERSION"
             else
-                print_failed "Running on: ${NC}Android $android_version is not recomended"
+                print_failed "Running on: ${NC}Android $ANDROID_VERSION is not recomended"
                 ((errors++))
             fi
         else
@@ -2185,8 +2255,8 @@ function check_system_requirements() {
         fi
         sleep 0.2
         # Android device soc & model details
-        model="$(getprop ro.product.brand) $(getprop ro.product.model)"
-        print_success "Device: ${NC}$model"
+        MODEL="$(getprop ro.product.brand) $(getprop ro.product.model)"
+        print_success "Device: ${NC}$MODEL"
         sleep 0.2
         PROCESSOR_BRAND_NAME="$(getprop ro.soc.manufacturer)"
         PROCESSOR_NAME="$(getprop ro.soc.model)"
@@ -2198,37 +2268,18 @@ function check_system_requirements() {
         fi
         sleep 0.2
         # Check GPU
-        gpu_egl=$(getprop ro.hardware.egl)
-        gpu_vulkan=$(getprop ro.hardware.vulkan)
-        detected_gpu="$(echo -e "$gpu_egl\n$gpu_vulkan" | sort -u | tr '\n' ' ' | sed 's/ $//')"
-        if echo "$detected_gpu" | grep -iq "adreno"; then
-            gpu_name="adreno"
-        elif echo "$detected_gpu" | grep -iq "mali"; then
-            gpu_name="mali"
-        elif echo "$detected_gpu" | grep -iqE "xclipse|samsung"; then
-            gpu_name="xclipse"
+        try_to_autodetect_gpu
+        if [[ "$GPU_NAME" == "adreno" ]] || [[ "$GPU_NAME" == "mali" ]] || [[ "$GPU_NAME" == "xclipse" ]]; then
+            print_success "GPU: ${NC}$GPU_NAME"
         else
-            gpu_name="unknown"
-        fi
-
-        if [[ "$gpu_name" == "adreno" ]] || [[ "$gpu_name" == "mali" ]] || [[ "$gpu_name" == "xclipse" ]]; then
-            print_success "GPU: ${NC}$gpu_name"
-        else
-            print_warn "Unknown GPU: ${NC}$detected_gpu"
+            print_warn "Unknown GPU: ${NC}$GPU_NAME"
         fi
         sleep 0.2
         # Check architecture
-        app_arch=$(uname -m)
-        supported_arch="$(getprop ro.product.cpu.abilist)"
-        case "$app_arch" in
-        aarch64) termux_arch="aarch64" ;;
-        armv7* | arm | armv8*) termux_arch="arm" ;;
-        esac
-
         if [[ "$termux_arch" == "aarch64" ]] || [[ "$termux_arch" == "arm" ]]; then
-            print_success "App architecture: ${NC}$app_arch"
+            print_success "App architecture: ${NC}$APP_ARCH"
         else
-            print_failed "Unsupported architecture: $app_arch, requires aarch64/arm/armv7*/armv8*"
+            print_failed "Unsupported architecture: $APP_ARCH, requires aarch64/arm/armv7*/armv8*"
             ((errors++))
         fi
         sleep 0.2
@@ -2268,19 +2319,19 @@ function check_system_requirements() {
             sleep 0.2
         fi
         # Check available storage space
-        free_space=$(df -h "$HOME" | awk 'NR==2 {print $4}')
+        FREE_SPACE=$(df -h "$HOME" | awk 'NR==2 {print $4}')
         if [[ $(df "$HOME" | awk 'NR==2 {print $4}') -gt 4194304 ]]; then
-            print_success "Available storage: ${NC}$free_space"
+            print_success "Available storage: ${NC}$FREE_SPACE"
         else
-            print_warn "Low storage space: ${NC}$free_space (4GB recommended)"
+            print_warn "Low storage space: ${NC}$FREE_SPACE (4GB recommended)"
         fi
         sleep 0.2
         # Check RAM
-        total_ram=$(free -htm | awk '/Mem:/ {print $2}')
+        TOTAL_RAM=$(free -htm | awk '/Mem:/ {print $2}')
         if [[ $(free -m | awk 'NR==2 {print $2}') -gt 2048 ]]; then
-            print_success "RAM: ${NC}${total_ram}"
+            print_success "RAM: ${NC}${TOTAL_RAM}"
         else
-            print_warn "Low RAM: ${NC}${total_ram} (2GB recommended)"
+            print_warn "Low RAM: ${NC}${TOTAL_RAM} (2GB recommended)"
         fi
         sleep 0.2
         # Check termux x11
@@ -2301,7 +2352,7 @@ function check_system_requirements() {
         fi
         # Check termux API
         if cmd package list packages --user 0 -e -f | sed 's/package://; s/\.apk=/\.apk /' | grep -q "com.termux.api"; then
-            is_termux_api_installed=true
+            IS_TERMUX_API_INSTALLED=true
             print_success "Termux-API: ${NC}Installed"
         else
             local latest_termux_api_tag
@@ -2364,7 +2415,7 @@ function print_recomended_msg() {
     echo
     echo "${G}Device Settings:${NC}"
     echo "   • Enable 'Keep screen on' in Termux settings"
-    if [[ "$android_version" -ge 12 ]]; then
+    if [[ "$ANDROID_VERSION" -ge 12 ]]; then
         echo "   • Disable Phantom Process Killer (Android 12+ requirement)"
     fi
     echo
@@ -2388,6 +2439,35 @@ function install_required_packages() {
     else
         package_install_and_check "wget git jq curl tar xz-utils gzip libpopt termux-am x11-repo tur-repo termux-api"
     fi
+}
+
+function recheck_basic_packages() {
+    print_msg "${BOLD}Checking required packages..."
+    local max_retries=3
+    local retry_count=0
+    local basic_packages=("wget" "git" "jq" "curl" "tar" "tar" "gzip" "termux-am" "termux-api-start")
+    local pack
+
+    while [[ "$retry_count" -le "$max_retries" ]]; do
+        local missing_packages=()
+        for pack in "${basic_packages[@]}"; do
+            print_msg "Checking command $pack"
+            if ! command -v "$pack" >/dev/null 2>&1; then
+                missing_packages+=("$pack")
+            fi
+        done
+
+        [[ ${#missing_packages[@]} -eq 0 ]] && return 0
+
+        ((retry_count++))
+        print_msg "Attempt $retry_count: Installing missing packages..."
+        print_msg "Missing packages: ${missing_packages[*]}"
+        install_required_packages
+    done
+
+    print_failed "Error: Failed to install packages after 3 attempts"
+    print_failed "Missing packages: ${missing_packages[*]}"
+    exit 1
 }
 
 function install_desktop() {
@@ -2445,7 +2525,7 @@ function install_desktop() {
         elif [[ "$PACKAGE_MANAGER" == "pacman" ]]; then
             download_and_extract "https://github.com/sabamdarif/termux-desktop/releases/download/gnome-shell/pkgs-${termux_arch}.zip"
             download_file "https://github.com/sabamdarif/Termux-AppStore/releases/download/files/refine_0.5.10_${termux_arch}.pkg.tar.xz"
-            pacman -U --noconfirm *.pkg.tar.xz
+            pacman -U --noconfirm ./*.pkg.tar.xz
         else
             print_failed "Unsupported package manger, you need APT / PACMAN"
             exit 1
@@ -2458,7 +2538,7 @@ function install_desktop() {
         echo
         package_install_and_check "cinnamon nemo gnome-terminal gnome-screenshot eog"
     fi
-    if [[ "$lite_mode" != "1" && "$lite_mode" != "true" ]]; then
+    if [[ "$LITE_MODE" != "1" && "$LITE_MODE" != "true" ]]; then
         package_install_and_check "file-roller pavucontrol gnome-font-viewer evince galculator xorg-xrdb"
     fi
     # Uncomment if additional package installation is needed
@@ -2477,7 +2557,7 @@ function ext_setup_for_stock() {
         print_msg "Genarating a simple menu for icewm..."
         check_and_backup "$HOME/.icewm"
         check_and_create_directory "$HOME/.icewm"
-        xdg_menu --format icewm --fullmenu --root-menu $PREFIX/etc/xdg/menus/termux-applications.menu >~/.icewm/programs
+        xdg_menu --format icewm --fullmenu --root-menu "$PREFIX/etc/xdg/menus/termux-applications.menu" >~/.icewm/programs
     fi
 }
 
@@ -2491,10 +2571,10 @@ function set_config_dir() {
         config_dirs=(autostart cairo-dock eww picom dconf gtk-3.0 Mousepad pulse Thunar menu ristretto rofi xfce4)
     elif [[ "$de_name" == "lxqt" ]]; then
         config_dirs=(fontconfig gtk-3.0 lxqt pcmanfm-qt QtProject.conf glib-2.0 Kvantum openbox qterminal.org)
-    elif [[ "$de_name" == "openbox" ]]; then
-        config_dirs=(dconf gedit Kvantum openbox pulse rofi xfce4 enchant gtk-3.0 mimeapps.list polybar QtProject.conf Thunar)
     elif [[ "$de_name" == "mate" ]]; then
         config_dirs=(caja dconf galculator gtk-3.0 Kvantum lximage-qt menus Mousepad pavucontrol.ini xfce4)
+    else
+        config_dirs=(dconf gedit Kvantum openbox pulse rofi xfce4 enchant gtk-3.0 mimeapps.list polybar QtProject.conf Thunar)
     fi
 }
 
@@ -2504,8 +2584,8 @@ function ext_wall_setup() {
         print_msg "${C}Skipping Extra Wallpapers Setup..."
         echo
     elif [[ "$ext_wall_answer" == "y" ]]; then
-        # if we doesn't set this to only run when call_from_change_style == false then it will clone the wallpapers each time user run --change style
-        if [[ "$call_from_change_style" == false ]]; then
+        # if we doesn't set this to only run when CALL_FROM_CHANGE_STYLE == false then it will clone the wallpapers each time user run --change style
+        if [[ "$CALL_FROM_CHANGE_STYLE" == false ]]; then
             print_msg "${BOLD}Installing Some Extra Wallpapers..."
             echo
             check_and_create_directory "$PREFIX/share/backgrounds"
@@ -2515,7 +2595,7 @@ function ext_wall_setup() {
             cd Wallpaper-Bank/wallpapers/ || exit 1
             mv Dynamic-Wallpapers/* "$PREFIX/share/backgrounds/"
             check_and_delete "Dynamic-Wallpapers"
-            mv * "$PREFIX/share/backgrounds/"
+            mv ./* "$PREFIX/share/backgrounds/"
             cd "${HOME}" || exit 1
             check_and_delete "Wallpaper-Bank"
         fi
@@ -2581,7 +2661,7 @@ function theme_installer() {
         if [[ -d "$HOME/.local" ]]; then
             must_back_folders+=("$HOME/.local")
         fi
-        tar -cJf "$HOME/old-config-$(date +%Y%m%d-%H%M%S).tar.xz" "${must_back_folders[@]}"
+        tar -cJvf "$HOME/old-config-$(date +%Y%m%d-%H%M%S).tar.xz" --warning=no-file-removed "${must_back_folders[@]}"
     fi
 
     print_msg "Applying Custom Configuration..."
@@ -2597,12 +2677,6 @@ function theme_installer() {
         download_and_extract "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/setup-files/setup-files/${de_name}/look_${style_answer}/config.tar.gz" "$HOME"
     else
         download_and_extract "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/setup-files/setup-files/${de_name}/look_${style_answer}/config.tar.gz" "$HOME/.config/"
-    fi
-
-    if [ $? -ne 0 ]; then
-        log_error "Theme installation failed" "Theme: $style_name"
-    else
-        log_debug "Theme installation completed successfully"
     fi
 }
 
@@ -2708,7 +2782,7 @@ function setup_folder() {
 }
 
 function setup_mic_permission() {
-    if [[ "$is_termux_api_installed" == true ]]; then
+    if [[ "$IS_TERMUX_API_INSTALLED" == true ]]; then
         print_msg "Setting up mic permission..."
         echo
         print_msg "Please grant mic permission"
@@ -2735,46 +2809,62 @@ function setup_necessary_permissions() {
 #########################################################################
 
 # setup hardware acceleration, check if the enable-hw-acceleration already exist, if then first check if it different from github , then ask user if they want to replace it with the latest or not, if not then continue with the local enable-hw-acceleration file
+function get_hw_acceleration_source() {
+    local script_path="${current_path}/enable-hw-acceleration"
+    local remote_url="https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/enable-hw-acceleration"
+
+    if [[ -f "$script_path" ]]; then
+        local current_script_hash
+        current_script_hash=$(curl -sL "$remote_url" | sha256sum | cut -d ' ' -f 1)
+
+        # Add error checking for remote fetch
+        if [[ -z "$current_script_hash" ]]; then
+            print_msg "Failed to fetch remote script for comparison. Using local version."
+            chmod +x "$script_path"
+            return
+        fi
+
+        local local_script_hash
+        local_script_hash=$(sha256sum "$script_path" | cut -d ' ' -f 1)
+
+        if [[ "$local_script_hash" != "$current_script_hash" ]]; then
+            print_msg "A different version of the hardware acceleration installer is detected."
+            echo
+            confirmation_y_or_n "Do you want to replace it with the latest version?" change_old_hw_installer
+            if [[ "$change_old_hw_installer" == "y" ]]; then
+                check_and_backup "$script_path"
+                download_file "$script_path" "$remote_url"
+            else
+                print_msg "Using the local hardware acceleration setup file."
+            fi
+            print_to_config "change_old_hw_installer"
+        else
+            print_msg "Using the local hardware acceleration setup file."
+        fi
+    else
+        download_file "$script_path" "$remote_url"
+    fi
+
+    chmod +x "$script_path"
+}
+
 function hw_config() {
     banner
     print_msg "${BOLD}Configuring Hardware Acceleration"
     echo
     print_to_config "enable_hw_acc"
-    if [[ -f ${current_path}/enable-hw-acceleration ]]; then
-        local current_script_hash
-        current_script_hash=$(curl -sL https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/enable-hw-acceleration | sha256sum | cut -d ' ' -f 1)
-        local local_script_hash
-        local_script_hash=$(sha256sum "${current_path}/enable-hw-acceleration" | cut -d ' ' -f 1)
 
-        if [[ "$local_script_hash" != "$current_script_hash" ]]; then
-            print_msg "A different version of the hardware acceleration installer is detected."
-            echo
+    # Get the hardware acceleration source
+    get_hw_acceleration_source
 
-            confirmation_y_or_n "Do you want to replace it with the latest version?" change_old_hw_installer
+    # Source the script
+    # shellcheck disable=SC1091
+    source "${current_path}/enable-hw-acceleration"
 
-            if [[ "$change_old_hw_installer" == "y" ]]; then
-                check_and_backup "${current_path}/enable-hw-acceleration"
-                download_file "${current_path}/enable-hw-acceleration" https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/enable-hw-acceleration
-                chmod +x "${current_path}/enable-hw-acceleration"
-                source "${current_path}"/enable-hw-acceleration
-            else
-                print_msg "Using the local hardware acceleration setup file."
-                chmod +x "${current_path}/enable-hw-acceleration"
-                source "${current_path}/enable-hw-acceleration"
-            fi
+    # Call the main hardware acceleration setup function
+    run_hw_acceleration_setup_main
 
-            print_to_config "change_old_hw_installer"
-        else
-            print_msg "Using the local hardware acceleration setup file."
-            chmod +x "${current_path}/enable-hw-acceleration"
-            source "${current_path}/enable-hw-acceleration"
-        fi
-    else
-        download_file "${current_path}/enable-hw-acceleration" https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/enable-hw-acceleration
-        chmod +x "${current_path}/enable-hw-acceleration"
-        source "${current_path}/enable-hw-acceleration"
-    fi
-
+    # Clean up
     check_and_delete "${current_path}/enable-hw-acceleration"
     log_debug "$current_path $current_script_hash $local_script_hash"
 }
@@ -2786,6 +2876,37 @@ function hw_config() {
 #########################################################################
 
 # same as the hardware acceleration setup but for distro-container-setup file
+function get_distro_container_source() {
+    local script_path="${current_path}/distro-container-setup"
+    local remote_url="https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/distro-container-setup"
+
+    if [[ -f "$script_path" ]]; then
+        local current_script_hash
+        current_script_hash=$(curl -sL "$remote_url" | sha256sum | cut -d ' ' -f 1)
+        local local_script_hash
+        local_script_hash=$(sha256sum "$script_path" | cut -d ' ' -f 1)
+
+        if [[ "$local_script_hash" != "$current_script_hash" ]]; then
+            print_msg "It looks like you already have a different distro-container setup script in your current directory"
+            echo
+            confirmation_y_or_n "Do you want to change it with the latest installer" change_old_distro_installer
+            if [[ "$change_old_distro_installer" == "y" ]]; then
+                check_and_backup "$script_path"
+                download_file "$script_path" "$remote_url"
+            else
+                print_msg "Using the local distro-container setup file"
+            fi
+            print_to_config "change_old_distro_installer"
+        else
+            print_msg "Using the local distro-container setup file"
+        fi
+    else
+        download_file "$script_path" "$remote_url"
+    fi
+
+    chmod +x "$script_path"
+}
+
 function distro_container_setup() {
     print_to_config "distro_add_answer"
     if [[ "$distro_add_answer" == "n" ]]; then
@@ -2802,46 +2923,17 @@ function distro_container_setup() {
         print_msg "${BOLD}Configuring Linux Distro Container"
         echo
 
-        if [[ -f "${current_path}/distro-container-setup" ]]; then
-            local current_script_hash
-            current_script_hash=$(curl -sL https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/distro-container-setup | sha256sum | cut -d ' ' -f 1)
-            local local_script_hash
-            local_script_hash=$(basename "$(sha256sum "${current_path}/distro-container-setup" | cut -d ' ' -f 1)")
+        # Get the distro container source
+        get_distro_container_source
 
-            if [[ "$local_script_hash" != "$current_script_hash" ]]; then
-                print_msg "It looks like you already have a different distro-container setup script in your current directory"
-                echo
-                confirmation_y_or_n "Do you want to change it with the latest installer" change_old_distro_installer
+        # Source the script
+        # shellcheck disable=SC1091
+        source "${current_path}/distro-container-setup"
 
-                if [[ "$change_old_distro_installer" == "y" ]]; then
-                    check_and_backup "${current_path}/distro-container-setup"
-                    download_file "${current_path}/distro-container-setup" "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/distro-container-setup"
+        # Call the main distro container setup function
+        run_distro_container_setup_main
 
-                    chmod +x "${current_path}/distro-container-setup"
-                    source "${current_path}/distro-container-setup"
-                else
-                    print_msg "Using the local distro-container setup file"
-                    chmod +x "${current_path}/distro-container-setup"
-                    source "${current_path}/distro-container-setup"
-                fi
-
-                print_to_config "change_old_distro_installer"
-            else
-                print_msg "Using the local distro-container setup file"
-                chmod +x "${current_path}/distro-container-setup"
-                source "${current_path}/distro-container-setup"
-            fi
-        else
-            download_file "${current_path}/distro-container-setup" "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/distro-container-setup"
-
-            # it should only execute if user run --change distro / pd
-            if [[ "$call_from_change_distro" == true ]]; then
-                sed -i 's/\(call_from_change_d="\)[^"]*/\1y/' "${current_path}/distro-container-setup"
-            fi
-
-            chmod +x "${current_path}/distro-container-setup"
-            source "${current_path}/distro-container-setup"
-        fi
+        # Clean up
         check_and_delete "${current_path}/distro-container-setup"
     fi
     log_debug "$current_path $distro_add_answer $local_script_hash"
@@ -3707,9 +3799,9 @@ function check_desktop_process() {
     if [[ -f "${PREFIX}/bin/tx11start" ]]; then
         print_success "Found tx11start file."
         print_msg "Starting Termux:X11 for checkup..."
-        termux-x11 :${display_number} -xstartup xfce4-session >/dev/null 2>&1 &
+        termux-x11 :"${display_number}" -xstartup xfce4-session >/dev/null 2>&1 &
         sleep 10
-        log_debug "$(cat $PREFIX/bin/tx11start)"
+        log_debug "$(cat "$PREFIX/bin/tx11start")"
         termux-reload-settings
         local termux_x11_pid
         termux_x11_pid=$(pgrep -f "app_process -Xnoimage-dex2oat / com.termux.x11.Loader :${display_number}")
@@ -3814,7 +3906,7 @@ function check_desktop_process() {
         # check tx11stop file and run it to check if there any termux x11 process exist or not
         if [[ -f "${PREFIX}/bin/tx11stop" ]]; then
             print_success "Found tx11stop file."
-            log_debug "$(cat $PREFIX/bin/tx11stop)"
+            log_debug "$(cat "$PREFIX/bin/tx11stop")"
             tx11stop -f
             # Wait a bit for the process to stop
             sleep 2
@@ -3827,13 +3919,15 @@ function check_desktop_process() {
             fi
         fi
     fi
-    print_msg "Adding custom Termux:x11 preferences..."
-    echo
     print_msg "Backing up current Termux:x11 preferences..."
     echo
+    termux-x11 &
     termux-x11-preference list >"$HOME/old-termx-x11-preferences"
     download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/other/termx-x11-preferences"
+    print_msg "Adding custom Termux:x11 preferences..."
+    echo
     termux-x11-preference <termx-x11-preferences
+    pkill -f com.termux.x11 >/dev/null 2>&1
     check_and_delete "termx-x11-preferences"
 }
 
@@ -4014,6 +4108,7 @@ function setup_zsh() {
     package_install_and_check "zsh git"
     download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/other/setup-zsh"
     chmod +x setup-zsh
+    # shellcheck disable=SC1091
     source setup-zsh
     check_and_delete "setup-zsh"
     if [[ -f "$HOME/.zshrc" ]]; then
@@ -4030,6 +4125,7 @@ function setup_bash() {
     package_install_and_check "git"
     download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/other/setup-bash"
     chmod +x setup-bash
+    # shellcheck disable=SC1091
     source setup-bash
     check_and_delete "setup-bash"
     if [[ -f "$HOME/.bashrc" ]]; then
@@ -4058,6 +4154,9 @@ function terminal_utility_setup() {
         print_msg "${C}${BOLD}Configuring Terminal Utility For Termux..."
         echo
         package_install_and_check "bat eza zoxide fastfetch openssh fzf"
+        if [[ "$PACKAGE_MANAGER" == "apt" ]]; then
+            package_install_and_check "nala"
+        fi
         check_and_backup "$PREFIX/etc/motd"
         check_and_backup "$PREFIX/etc/motd-playstore"
         check_and_backup "$PREFIX/etc/motd.sh"
@@ -4103,7 +4202,7 @@ EOF
 
     cat <<EOF >>"$HOME/.shell_rc_content"
 # print your current termux-desktop configuration
-alias 'tdconfig'='cat "$config_file"'
+alias 'tdconfig'='cat "$CONFIG_FILE"'
 if [[ \$HOME != *termux* ]]; then
   export DISPLAY=:$display_number
 fi
@@ -4112,6 +4211,66 @@ EOF
         cat <<EOF >>"$HOME/.shell_rc_content"
 # open the folder where all the apps added by proot-distro are located
 alias 'pdapps'='cd /data/data/com.termux/files/usr/share/applications/pd_added && ls'
+EOF
+    fi
+
+    if [[ "$PACKAGE_MANAGER" == "apt" ]]; then
+        cat <<'EOF' >>"$HOME/.shell_rc_content"
+apt_wrapper() {
+    # First check if nala is actually installed. If not fall back to the apt
+    if ! command -v nala >/dev/null 2>&1; then
+        echo "nala not found, falling back to apt."
+        command apt "$@"
+        return $?
+    fi
+
+    # If no argument given then run nala to print help menu
+    if [ -z "$1" ]; then
+        command nala
+        return
+    fi
+
+    local cmd="$1"
+    shift
+
+    case "$cmd" in
+    install | in | add)
+        command nala install "$@"
+        ;;
+    se* | sr | find)
+        command nala search "$@"
+        ;;
+    up | update)
+        command nala update "$@"
+        ;;
+    upg*)
+        command nala upgrade "$@"
+        ;;
+    show | info)
+        command nala show "$@"
+        ;;
+    cl*)
+        command nala clean "$@"
+        ;;
+    ap | autopurge)
+        command nala autopurge "$@"
+        ;;
+    un* | rem* | rm | del* | r)
+        command nala remove "$@"
+        ;;
+    list-up*)
+        command nala list --upgradable
+        ;;
+    *)
+        # pass the command ($cmd) along with the rest of the arguments
+        # although i don't think we need to pass $@
+        # but i still did it just to be in the safe side
+        command nala "$cmd" "$@"
+        ;;
+    esac
+}
+
+alias apt='apt_wrapper'
 EOF
     fi
 
@@ -4197,7 +4356,7 @@ function run_wine_shortcut_script() {
     print_success "Adding wine desktop shortcuts..."
     download_file "add-wine-shortcut" "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/other/add-wine-shortcut"
     chmod +x "add-wine-shortcut"
-    . add-wine-shortcut
+    source add-wine-shortcut
     check_and_delete "add-wine-shortcut"
 }
 
@@ -4316,9 +4475,9 @@ C="$(printf '\033[1;36m')"
 NC="$(printf '\033[0m')"
 BOLD="$(printf '\033[1m')"
 
-termux_desktop_path="/data/data/com.termux/files/usr/etc/termux-desktop"
-config_file="$termux_desktop_path/configuration.conf"
-log_file="/data/data/com.termux/files/home/termux-desktop.log"
+TERMUX_DESKTOP_PATH="/data/data/com.termux/files/usr/etc/termux-desktop"
+CONFIG_FILE="$TERMUX_DESKTOP_PATH/configuration.conf"
+LOG_FILE="/data/data/com.termux/files/home/termux-desktop.log"
 EOF
     typeset -f check_termux log_debug print_success print_failed print_warn print_msg wait_for_keypress check_and_create_directory check_and_delete check_and_backup download_file check_and_restore detact_package_manager package_install_and_check package_check_and_remove get_file_name_number extract_zip_with_progress extract_archive download_and_extract count_subfolders confirmation_y_or_n get_latest_release install_font_for_style select_an_option read_conf print_to_config >>"$PREFIX/etc/termux-desktop/common_functions"
     chmod +x "$PREFIX/etc/termux-desktop/common_functions"
@@ -4406,7 +4565,7 @@ function remove_desktop_environments() {
 }
 
 function remove_termux_desktop() {
-    if [[ ! -e "$config_file" ]]; then
+    if [[ ! -e "$CONFIG_FILE" ]]; then
         print_msg "${C}${BOLD}Please Install Termux Desktop First"
         exit 1
     else
@@ -4513,11 +4672,14 @@ function remove_termux_desktop() {
             elif [[ "$gui_mode" == "both" ]]; then
                 package_check_and_remove "termux-x11-nightly tigervnc xorg-xhost"
                 check_and_delete "$PREFIX/bin/tx11start $PREFIX/bin/tx11stop $HOME/.vnc/xstartup $PREFIX/bin/vncstart $PREFIX/bin/vncstop $PREFIX/bin/gui $PREFIX/bin/tx11start $PREFIX/bin/tx11stop"
-                cd /data/data/com.termux/files/usr/share/zsh/site-functions
+                # shellcheck disable=SC2164
+                cd "$PREFIX/share/zsh/site-functions"
                 check_and_delete "_add2menu _distro _setup-termux-desktop _tx11start _tx11stop _vncstart _vncstop"
-                cd /data/data/com.termux/files/usr/share/bash-completion/completions
+                # shellcheck disable=SC2164
+                cd "$PREFIX/share/bash-completion/completions"
                 check_and_delete "add2menu distro setup-termux-desktop tx11start tx11stop vncstart vncstop"
-                cd ~
+                # shellcheck disable=SC2164
+                cd "$HOME"
                 # remove appstore
                 package_check_and_remove "aria2 python python3 cloneit"
                 check_and_delete "${PREFIX}/opt/appstore"
@@ -4547,7 +4709,7 @@ function gui_check_up() {
 }
 
 function change_style() {
-    if [[ ! -e "$config_file" ]]; then
+    if [[ ! -e "$CONFIG_FILE" ]]; then
         echo -e "${C} It look like you haven't install the desktop yet\n Please install the desktop first${NC}"
         exit 1
     else
@@ -4577,39 +4739,75 @@ function change_style() {
 #
 #########################################################################
 
+function do_hw_changes() {
+    try_to_autodetect_gpu
+    setup_device_gpu_model
+    hw_questions
+    update_sys
+    hw_config
+    if [[ "$gui_mode" == "termux_x11" ]]; then
+        setup_tx11start_cmd
+        some_fixes
+    elif [[ "$gui_mode" == "both" ]]; then
+        setup_tx11start_cmd
+        setup_vncstart_cmd
+        some_fixes
+    fi
+    if [[ "$distro_add_answer" == "y" ]]; then
+        get_distro_container_source
+        # shellcheck disable=SC1091
+        source "${current_path}/distro-container-setup"
+        distro_app_launch_setup
+        check_and_delete "${current_path}/distro-container-setup"
+    fi
+}
+
 function change_hw() {
     # Check if the configuration file exists
-    if [[ ! -e "$config_file" ]]; then
+    if [[ ! -e "$CONFIG_FILE" ]]; then
         print_warn "${C}It looks like you haven't installed the desktop yee. Please install the desktop first"
         exit 1
     else
         read_conf
+        local old_hw_option
+        old_hw_option="${termux_hw_answer}"
         if [[ "$enable_hw_acc" == "y" ]]; then
             banner
             print_msg "Your current hardware acceleration api for Termux is: ${C}${BOLD}${termux_hw_answer}"
             if [[ "$distro_add_answer" == "y" ]]; then
                 print_msg "Your current hardware acceleration api for $selected_distro is: ${C}${BOLD}${pd_hw_answer}"
             fi
-            confirmation_y_or_n "Do you want to change hardware acceleration api" confirmation_chnage_hardware_acceleration
-            if [[ "$confirmation_chnage_hardware_acceleration" == "y" ]]; then
-                hw_questions
-                hw_config
-                if [[ "$gui_mode" == "termux_x11" ]]; then
-                    setup_tx11start_cmd
-                    some_fixes
-                elif [[ "$gui_mode" == "both" ]]; then
-                    setup_tx11start_cmd
-                    setup_vncstart_cmd
-                    some_fixes
+            confirmation_y_or_n "Do you want to change hardware acceleration api" confirmation_change_hardware_acceleration
+            if [[ "$confirmation_change_hardware_acceleration" == "y" ]]; then
+                do_hw_changes
+                read_conf
+                if [[ "$old_hw_option" != "$termux_hw_answer" ]]; then
+                    print_success "${BOLD}Hardware acceleration method successfully changed to ${termux_hw_answer}"
+                    exit 0
+                elif [[ "$old_hw_option" == "$termux_hw_answer" ]]; then
+                    print_success "${BOLD}Hardware acceleration method is still on ${termux_hw_answer}"
+                    exit 0
+                else
+                    print_failed "Something went wrong during the hardware acceleration process..."
+                    exit 1
                 fi
-                if [[ "$distro_add_answer" == "y" ]]; then
-                    sed -i "s|selected_pd_hw_method=\"[^\"]*\"|selected_pd_hw_method=\"$pd_hw_method\"|" "$PREFIX/bin/pdrun"
-                fi
-                clear
-                print_success "${BOLD}Hardware acceleration method changed successfully"
             fi
         elif [[ "$enable_hw_acc" == "n" ]]; then
             print_msg "This option can only be used if have Hardware Acceleration enabled"
+            confirmation_y_or_n "Do you want to enable Hardware Acceleration" confirmation_want_to_enable_hw
+            if [[ "$confirmation_want_to_enable_hw" == "y" ]]; then
+                enable_hw_acc="y"
+                do_hw_changes
+                read_conf
+                if [[ "$enable_hw_acc" == "y" ]]; then
+                    print_success "${BOLD}Successfully enable hardware acceleration"
+                else
+                    print_failed "Some issue occurred during the hardware acceleration change process..."
+                fi
+            elif [[ "$confirmation_want_to_enable_hw" == "n" ]]; then
+                print_msg "Keeping Hardware Acceleration disabled"
+                exit 0
+            fi
         fi
     fi
 }
@@ -4631,13 +4829,22 @@ function add_distro_again() {
     if [[ "$distro_add_answer" == "y" ]]; then
         print_to_config "distro_add_answer"
         distro_questions
-        distro_hw_questions
+        if [[ "$enable_hw_acc" == "y" ]]; then
+            distro_hw_questions
+            # call setup_hw_environment_variables from hw-acceleration setup script
+            # this is needed for pdrun command
+            get_hw_acceleration_source
+            # shellcheck disable=SC1091
+            source "${current_path}/enable-hw-acceleration"
+            setup_hw_environment_variables
+            check_and_delete "${current_path}/enable-hw-acceleration"
+        fi
         distro_container_setup
     fi
 }
 
 function change_distro() {
-    if [[ ! -e "$config_file" ]]; then
+    if [[ ! -e "$CONFIG_FILE" ]]; then
         echo -e "${C} It look like you haven't install the desktop yet\n Please install the desktop first${NC}"
         exit 1
     else
@@ -4681,7 +4888,11 @@ function change_distro() {
                 check_and_delete "/data/data/com.termux/files/usr/share/bash-completion/completions/${old_distro}"
                 check_and_delete "/data/data/com.termux/files/usr/share/zsh/site-functions/_${old_distro}"
                 check_and_delete "$PREFIX/bin/$selected_distro"
-                pd_hw_method=$(grep 'selected_pd_hw_method=' "$PREFIX/bin/pdrun" | sed -e 's/.*selected_pd_hw_method="\([^"]*\)".*/\1/')
+                get_hw_acceleration_source
+                # shellcheck disable=SC1091
+                source "${current_path}/enable-hw-acceleration"
+                setup_hw_environment_variables
+                check_and_delete "${current_path}/enable-hw-acceleration"
                 if [[ "$pd_audio_config_answer" == "y" ]]; then
                     rm "$HOME/.${selected_distro}-sound-access"
                 fi
@@ -4775,7 +4986,8 @@ function change_display() {
                     print_warn "${R}Please enter a valid number between 0-9"
                 fi
             done
-            call_from_change_display=y
+            # shellcheck disable=SC2034
+            call_from_change_display=true
             hw_config
             setup_tx11start_cmd
             print_to_config "display_number"
@@ -4816,14 +5028,17 @@ function change_de() {
         else
             setup_config
         fi
+        if [[ "$enable_hw_acc" == "y" ]]; then
+            hw_config
+        fi
         gui_launcher
         print_msg "Removeing old $old_de_name environment"
         de_name="$old_de_name"
         remove_desktop_environments
         unset de_name
+        read_conf
         check_desktop_process
         add_to_autostart
-        read_conf
         echo " "
         print_msg "Your current environment is $de_name"
     fi
@@ -4893,12 +5108,12 @@ function reinstall_config() {
     check_and_create_directory "$tmp_config_folder"
     print_msg "Reinstalling Config..."
     download_and_extract "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/setup-files/setup-files/${de_name}/look_${style_answer}/config.tar.gz" "$tmp_config_folder"
-    local config_file_names
-    config_file_names=$(ls "$tmp_config_folder")
-    local config_file
-    for config_file in $config_file_names; do
-        check_and_delete "$HOME/.config/$config_file"
-        mv "$tmp_config_folder/$config_file" "$HOME/.config/"
+    local dot_config_file_names
+    dot_config_file_names=$(ls "$tmp_config_folder")
+    local dot_config_file
+    for dot_config_file in $dot_config_file_names; do
+        check_and_delete "$HOME/.config/$dot_config_file"
+        mv "$tmp_config_folder/$dot_config_file" "$HOME/.config/"
     done
     print_msg "${BOLD}Config reinstall successfully"
 }
@@ -4913,6 +5128,7 @@ function add_auto_completion() {
     banner
     print_msg "Adding auto completions..."
     check_and_create_directory "/data/data/com.termux/files/usr/share/zsh/site-functions"
+    # shellcheck disable=SC2164
     cd /data/data/com.termux/files/usr/share/zsh/site-functions
     download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/completion/zsh/_setup-termux-desktop"
     if [[ "$gui_mode" == "both" ]]; then
@@ -4927,6 +5143,7 @@ function add_auto_completion() {
         download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/completion/zsh/_add2menu"
     fi
     check_and_create_directory "/data/data/com.termux/files/usr/share/bash-completion/completions"
+    # shellcheck disable=SC2164
     cd /data/data/com.termux/files/usr/share/bash-completion/completions
     download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/completion/bash/setup-termux-desktop"
     if [[ "$gui_mode" == "both" ]]; then
@@ -4940,7 +5157,7 @@ function add_auto_completion() {
         sed -i "s/distro/${selected_distro}/g" "${selected_distro}"
         download_file "https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/completion/bash/add2menu"
     fi
-    cd $HOME
+    cd "$HOME" || return 1
 }
 
 function disable_vblank_mode() {
@@ -4954,7 +5171,7 @@ function some_fixes() {
     # samsung oneui-6 audio fixes
     local device_brand_name
     device_brand_name=$(getprop ro.product.brand | cut -d ' ' -f 1)
-    if [[ $device_brand_name == samsung* && $android_version -ge 14 ]]; then
+    if [[ $device_brand_name == samsung* && $ANDROID_VERSION -ge 14 ]]; then
         package_install_and_check "libandroid-stub"
         # if [[ -e "/system/lib64/libskcodec.so" ]]; then
         #     grep -q 'export LD_PRELOAD=/system/lib64/libskcodec.so' "$shell_rc_file" || echo 'export LD_PRELOAD=/system/lib64/libskcodec.so' >>"$shell_rc_file"
@@ -5008,10 +5225,10 @@ function print_basic_details() {
     local country
     net_condition="$(getprop gsm.network.type)"
     country="$(getprop gsm.sim.operator.iso-country)"
-    if [[ -f "$config_file" ]]; then
-        check_and_backup "$config_file"
+    if [[ -f "$CONFIG_FILE" ]]; then
+        check_and_backup "$CONFIG_FILE"
     fi
-    cat <<EOF >"$config_file"
+    cat <<EOF >"$CONFIG_FILE"
 ####################################
 ########## Termux Desktop ##########
 ####################################
@@ -5021,14 +5238,14 @@ function print_basic_details() {
 ########################
 #
 # Termux Version: ${TERMUX_VERSION}-${TERMUX_APK_RELEASE}
-# Device Model: $model
-# Android Version: $android_version
-# Free Space: $free_space
-# Total Ram: $total_ram
-# Architecture: $app_arch
-# System CPU Architecture: $supported_arch
+# Device Model: $MODEL
+# Android Version: $ANDROID_VERSION
+# Free Space: $FREE_SPACE
+# Total Ram: $TOTAL_RAM
+# Architecture: $APP_ARCH
+# System CPU Architecture: $SUPPORTED_ARCH
 # Processor: $PROCESSOR_BRAND_NAME $PROCESSOR_NAME
-# GPU: $detected_gpu
+# GPU: $GPU_NAME
 # Network Condition: $net_condition
 # Country: $country
 #
@@ -5060,7 +5277,7 @@ function check_for_update_and_update_installer() {
         print_msg "Checking for update..."
         echo
 
-        check_and_create_directory "$termux_desktop_path"
+        check_and_create_directory "$TERMUX_DESKTOP_PATH"
         local current_script_hash
         local update_installer
         current_script_hash=$(curl -sL https://raw.githubusercontent.com/sabamdarif/termux-desktop/refs/heads/main/setup-termux-desktop | sha256sum | cut -d ' ' -f 1)
@@ -5081,7 +5298,7 @@ function check_for_update_and_update_installer() {
                 new_local_script_hash=$(basename "$(sha256sum "$PREFIX/bin/setup-termux-desktop" | cut -d ' ' -f 1)")
                 if [[ "$new_local_script_hash" == "$current_script_hash" ]]; then
                     print_msg "Installer updated successfully"
-                    check_and_delete "$termux_desktop_path/skip_update_checkup"
+                    check_and_delete "$TERMUX_DESKTOP_PATH/skip_update_checkup"
                     exit 0
                 else
                     print_msg "Failed to update the installer"
@@ -5089,8 +5306,8 @@ function check_for_update_and_update_installer() {
                 fi
             elif [[ "$update_installer" == "n" ]]; then
                 print_msg "Keeping the old installer"
-                check_and_create_directory "$termux_desktop_path"
-                touch "$termux_desktop_path/skip_update_checkup"
+                check_and_create_directory "$TERMUX_DESKTOP_PATH"
+                touch "$TERMUX_DESKTOP_PATH/skip_update_checkup"
                 exit 0
             fi
         else
@@ -5101,7 +5318,7 @@ function check_for_update_and_update_installer() {
 
 function check_installer_status() {
     if [[ -e "$PREFIX/bin/setup-termux-desktop" ]]; then
-        if [[ ! -e "$termux_desktop_path/skip_update_checkup" ]]; then
+        if [[ ! -e "$TERMUX_DESKTOP_PATH/skip_update_checkup" ]]; then
             check_for_update_and_update_installer
         else
             print_msg "${BOLD}Update check skipped"
@@ -5123,7 +5340,7 @@ function check_for_appstore_update() {
 #########################################################################
 
 function reset_changes() {
-    if [[ ! -e "$config_file" ]]; then
+    if [[ ! -e "$CONFIG_FILE" ]]; then
         echo -e "${C} It looks like you haven't installed the desktop yet.\n Please install the desktop first.${NC}"
         exit 1
     else
@@ -5131,7 +5348,7 @@ function reset_changes() {
         banner
         print_msg "Removing $de_name Config..."
         set_config_dir
-        check_and_delete "${config_dirs}"
+        check_and_delete "${config_dirs[@]}"
         get_shellrc_path
 
         if [[ "$terminal_utility_setup_answer" == "y" ]]; then
@@ -5143,17 +5360,20 @@ function reset_changes() {
             check_and_restore "$PREFIX/etc/motd.sh"
             termux-reload-settings
             check_and_restore "$HOME/.termux/colors.properties"
+            # shellcheck disable=SC2164
             cd /data/data/com.termux/files/usr/share/zsh/site-functions
             check_and_delete "_add2menu _distro _setup-termux-desktop _tx11start _tx11stop _vncstart _vncstop"
+            # shellcheck disable=SC2164
             cd /data/data/com.termux/files/usr/share/bash-completion/completions
             check_and_delete "add2menu distro setup-termux-desktop tx11start tx11stop vncstart vncstop"
-            cd ~
+            # shellcheck disable=SC2164
+            cd "$HOME"
             if grep -q "motd.sh$" "$PREFIX/etc/termux-login.sh"; then
                 sed -i "s|.*motd\.sh$|# |" "$PREFIX/etc/termux-login.sh"
                 termux-reload-settings
             fi
             rm "$PREFIX/share/applications/wine-*.desktop" >/dev/null 2>&1
-            check_and_delete "$termux_desktop_path"
+            check_and_delete "$TERMUX_DESKTOP_PATH"
             check_and_delete "$PREFIX/bin/tx11start $PREFIX/bin/tx11stop $PREFIX/bin/vncstop $PREFIX/bin/vncstart $PREFIX/bin/gui $PREFIX/bin/pdrun"
         fi
 
@@ -5185,12 +5405,14 @@ if [[ -z "$1" ]] || [[ "$1" == "--install" ]] || [[ "$1" == "-i" ]]; then
     check_installer_status "$1"
 fi
 current_path=$(pwd)
+get_termux_arch
 function install_termux_desktop() {
     banner
     update_sys
     cleanup_cache
     termux-wake-lock
     install_required_packages
+    recheck_basic_packages
     if [[ "$1" != "--local-config" && "$1" != "--config" && "$1" != "-config" ]]; then
         print_recomended_msg
     fi
@@ -5213,8 +5435,8 @@ function install_termux_desktop() {
         check_and_delete "${current_path}/styles.md"
     fi
     print_conf_info
-    check_and_create_directory "${termux_desktop_path}"
-    log_debug "$config_file"
+    check_and_create_directory "${TERMUX_DESKTOP_PATH}"
+    log_debug "$CONFIG_FILE"
     print_basic_details
     setup_necessary_permissions
     setup_shell
@@ -5252,7 +5474,7 @@ function install_termux_desktop() {
     termux-wake-unlock
     add_installer
     notes
-    log_debug "$(cat $config_file)"
+    log_debug "$(cat $CONFIG_FILE)"
     delete_installer_file
 }
 
@@ -5313,11 +5535,13 @@ case $1 in
 --change | -c)
     case $2 in
     style)
-        call_from_change_style=true
+        # shellcheck disable=SC2034
+        CALL_FROM_CHANGE_STYLE=true
         change_style
         ;;
     distro | pd)
-        call_from_change_distro=true
+        # shellcheck disable=SC2034
+        CALL_FROM_CHANGE_DISTRO=true
         change_distro
         ;;
     hw | hwa)
@@ -5329,7 +5553,7 @@ case $1 in
     display)
         change_display
         ;;
-    de | wm)
+    de | wm | desktop | winm | wim)
         change_de
         ;;
     h | help | -h | --help)
