@@ -1,4 +1,5 @@
 ## Expanding Termux Functionality with Distro Containers
+
 #### Video Guide:- [YouTube](https://youtu.be/KiUTyGZ2grE?si=9L8pg00Vf--64Tsp)
 
 Termux natively supports a limited selection of applications. However, with this script, you can extend Termux's capabilities by integrating applications from other Linux distributions using a **Distro Container**. The best part? There’s no need to log in to the Proot/chroot-distro to access these apps; they seamlessly integrate into Termux, appearing in its desktop app menu and launching directly from the Termux terminal.
@@ -78,6 +79,7 @@ For a faster setup, use the following command to install an app and add it to th
 ```bash
 debian install libreoffice
 ```
+
 <center><img src="https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/apps/container-libreoffice-2.png"></center>
 
 If this method doesn’t work for any reason, you can manually add the app to the menu using the steps outlined above.
@@ -93,19 +95,19 @@ If this method doesn’t work for any reason, you can manually add the app to th
     - Use the `--root` or `-r` flag to log in as root:
 
     ```bash
-  debian --root
+    debian --root
     ```
 
 - **Remove the Distro**:
     - To uninstall the distribution and remove all related files, use:
 
     ```bash
-  debian --remove
+    debian --remove
     ```
 
 - **Show Help**:
     - Display help information for the distribution with:
 
     ```bash
-  debian --help
+    debian --help
     ```

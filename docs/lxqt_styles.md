@@ -5,9 +5,9 @@
 <details style ="font-size: larger">
 <summary><b style ="font-size: larger">Screenshots: </b></summary>
 
-|Apps|Start Menu|
-|--|--|
-|![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/lxqt/look_0/apps.png)|![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/lxqt/look_0/start-menu.png)|
+| Apps                                                                                                        | Start Menu                                                                                                        |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| ![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/lxqt/look_0/apps.png) | ![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/lxqt/look_0/start-menu.png) |
 
 </details>
 <br>
@@ -16,7 +16,7 @@
 
 <details>
 <summary><b style ="font-size: small">Style Details: </summary>
-Theme Used: 
+Theme Used:
 <br>
 
 - GTK Theme:- [Nordic-darker](https://www.gnome-look.org/p/1267246)
@@ -38,9 +38,9 @@ Icon Used:
 <details style ="font-size: larger">
 <summary><b style ="font-size: larger">Screenshots: </b></summary>
 
-|Apps|Start Menu|
-|--|--|
-|![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/lxqt/look_1/apps.png)|![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/lxqt/look_1/start-menu.png)|
+| Apps                                                                                                        | Start Menu                                                                                                        |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| ![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/lxqt/look_1/apps.png) | ![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/lxqt/look_1/start-menu.png) |
 
 </details>
 
@@ -50,7 +50,7 @@ Icon Used:
 
 <details>
 <summary><b style ="font-size: small">Style Details: </summary>
-Theme Used: 
+Theme Used:
 <br>
 
 - GTK Theme:- [Redstone](https://www.gnome-look.org/p/1013482)
@@ -72,9 +72,9 @@ Icon Used:
 <details style ="font-size: larger">
 <summary><b style ="font-size: larger">Screenshots: </b></summary>
 
-|Apps|Start Menu|
-|--|--|
-|![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/lxqt/look_2/apps.png)|![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/lxqt/look_2/start-menu.png)|
+| Apps                                                                                                        | Start Menu                                                                                                        |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| ![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/lxqt/look_2/apps.png) | ![img](https://raw.githubusercontent.com/sabamdarif/termux-desktop/setup-files/images/lxqt/look_2/start-menu.png) |
 
 </details>
 
